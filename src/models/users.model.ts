@@ -1,0 +1,72 @@
+import {ObjectId, Schema, model} from "mongoose";
+
+
+interface IUser {
+
+    rollNumber: string;
+
+    password: string;
+
+    role: "student" | "librarian" | "admin";
+
+    isEmailVerified: boolean;
+
+    isPhoneVerified: boolean;
+
+    isFirstLogin: boolean;
+
+    createdAt: Date;
+
+    updatedAt: Date;
+
+}
+
+const userSchema = new Schema<IUser>({
+    
+    rollNumber : {
+        type: String,
+        required:[true,"Enter Roll Number to Continue"],
+        unique:[true,"User Already Exist"],
+        trim : true
+    },
+
+    password:{
+        type:String,
+        required: true,
+        select : false
+       
+    },
+
+    role : {
+        type : String,
+        enum : ["student", "librarian", "admin"], 
+        default : "student",
+        required : true
+    },
+
+    isEmailVerified : {
+        type : Boolean,
+        required : true,
+        default : false
+    },
+
+    isPhoneVerified : {
+        type : Boolean,
+        required : true,
+        default : false
+    },
+
+    isFirstLogin : {
+        type : Boolean,
+        required : true,
+        default : true
+    },
+
+},{
+    timestamps : true
+})
+
+export const userModel = model<IUser>(
+    "UserRegistry",
+    userSchema
+);
