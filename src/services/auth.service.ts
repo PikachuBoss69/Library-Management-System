@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+
 const secretKey = process.env.JWT_SECRET; 
 export async function generatePassword() : Promise<string> {
     // Implementation for generating a random password
@@ -54,8 +55,3 @@ export async function sendEmailOtp(email : string, otp: number) : Promise<void> 
 export async function sendPhoneOtp(phoneNumber: number, otp: number) : Promise<void> {
     await sendSms(phoneNumber, otp);
 }
-
-
-export async function verifyPassword(req: Request, res: Response) : Promise<void> {}
-    
-export async function updatePassword(req: Request, res: Response) : Promise<void> {}
