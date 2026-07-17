@@ -1,5 +1,6 @@
-import {ObjectId, Schema, model} from "mongoose";
+import {ObjectId, Schema, model, Model} from "mongoose";
 import bcrypt from "bcrypt";
+
 
 interface IUser {
 
@@ -21,7 +22,14 @@ interface IUser {
 
 }
 
-const userSchema = new Schema<IUser>({
+interface IUserMethods {
+    comparePassword(password: string): Promise<boolean>;
+}
+
+
+interface IUserModel extends Model<IUser, {}, IUserMethods> {}
+
+const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     
     rollNumber : {
         type: String,
@@ -84,7 +92,7 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 }
 
 
-export const userModel = model<IUser>(
+export const userModel = model<IUser, IUserModel>(
     "UserRegistry",
     userSchema
 );
