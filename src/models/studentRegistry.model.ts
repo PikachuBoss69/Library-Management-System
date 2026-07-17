@@ -4,11 +4,11 @@ export interface IStudentRegistry {
     rollNumber: string;
     fullName: string;
     collegeEmail: string;
-    phoneNumber: number;
+    phoneNumber: string;
     dateOfBirth: Date;
     fatherName: string;
     motherName: string;
-    parentPhoneNumber: number;
+    parentPhoneNumber: string;
     course: string;
     branch: string;
     year: number;
@@ -33,7 +33,7 @@ const studentRegistrySchema = new Schema<IStudentRegistry>(
             required: true,
         },
         phoneNumber: {
-            type: Number,
+            type: String,
             required: true,
         },
         dateOfBirth: {
@@ -49,10 +49,6 @@ const studentRegistrySchema = new Schema<IStudentRegistry>(
             required: true,
         },
         parentPhoneNumber: {
-            type: Number,
-            required: true,
-        },
-        course: {
             type: String,
             required: true,
         },

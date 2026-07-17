@@ -52,6 +52,6 @@ export async function sendEmailOtp(email : string, otp: number) : Promise<void> 
     await sendingEmailOtp(email, otp);
 } 
 
-export async function sendPhoneOtp(phoneNumber: number, otp: number) : Promise<void> {
+export async function sendPhoneOtp(phoneNumber: string, otp: number) : Promise<void> {
     await sendSms(phoneNumber, otp);
 }

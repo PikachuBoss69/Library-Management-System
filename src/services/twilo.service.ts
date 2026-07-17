@@ -14,12 +14,12 @@ if (!accountSid || !authToken || !twilioPhoneNumber) {
 const client = twilio(accountSid, authToken);
 
 export const sendSms = async (
-    phoneNumber:number,
+    phoneNumber:string,
     otp:number
 ) => {
     return client.messages.create({
         body: `Your OTP is ${otp}. Please do not share it with anyone.`,
         from: twilioPhoneNumber,
-        to: String(phoneNumber),
+        to: `+91${phoneNumber}`,
     });
 };

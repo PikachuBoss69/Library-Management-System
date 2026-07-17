@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 import {createTransport, getTestMessageUrl} from "nodemailer";
+import { AppError } from '../utils/AppError';
 dotenv.config();
 
 const bank_email = process.env.EMAIL_USER
@@ -23,7 +24,8 @@ const transporter = createTransport({
 // Verify the connection configuration
 transporter.verify((error: Error | null, success: boolean) => {
   if (error) {
-    console.error('Error connecting to email server:', error);
+    //Instead of throwing error we use console.error because this callback executes asynchronously during application startup. Throwing here can crash your Node.js process unexpectedly.
+    console.error("Email server verification failed:", error);
   } else {
     console.log('Email server is ready to send messages');
   }
@@ -40,10 +42,9 @@ const sendEmail = async (to: string, subject: string, text: string, html: string
       html, // html body
     });
 
-    console.log('Message sent: %s', info.messageId);
-    console.log('Preview URL: %s', getTestMessageUrl(info));
   } catch (error) {
     console.error('Error sending email:', error);
+    throw new AppError("Failed to send email", 500);
   }
 };
 
