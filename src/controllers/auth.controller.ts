@@ -83,7 +83,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     if (!generatedEmailOtp || !generatedPhoneOtp) {
         throw new AppError("OTP not found for the provided roll number", 404);
     }
-    
+
     // Verify the provided OTPs against the generated ones
     const isEmailVerified = compareOtps(emailOtp, generatedEmailOtp);
     const isPhoneVerified = compareOtps(phoneOtp, generatedPhoneOtp);

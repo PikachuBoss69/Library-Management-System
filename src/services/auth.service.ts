@@ -25,7 +25,10 @@ export async function createUser(rollNumber: string, password: string, role: "st
 }
 
 export function compareOtps(userOtp: number, generatedOtp: number): boolean {
-    return (userOtp === generatedOtp)
+    if(userOtp == generatedOtp){
+        return true;
+    }
+    return false;
 }
 
 //Geneates a random 6-digit OTP for email and phone verification
