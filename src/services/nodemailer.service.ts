@@ -56,5 +56,13 @@ export async function sendingEmailOtp(email: string, otp: number): Promise<void>
   await sendEmail(email, subject, text, html);
 }
 
+export async function sendingEmailPassword(email: string, password: string): Promise<void> {
+  const subject = 'Your Password for Library Management System';
+  const text = `Your password is: ${password}`;
+  const html = `<p>Your password is: <strong>${password}</strong></p>`;
+
+  await sendEmail(email, subject, text, html);
+}
+
 
     

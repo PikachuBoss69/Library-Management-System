@@ -3,7 +3,7 @@ import {StudentRegistry} from "../models/studentRegistry.model";
 import OtpModel from "../models/otp.model";
 import jwt from "jsonwebtoken";
 import {Request, Response } from "express";
-import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, createUser, generatePassword} from "../services/auth.service";
+import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, createUser, generatePassword, sendPasswordEmail} from "../services/auth.service";
 import {AppError} from "../utils/AppError";
 import dotenv from "dotenv";
 
@@ -39,7 +39,35 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
 
 }
 
-async function loginUser(req: Request, res: Response) {}
+async function loginUser(req: Request, res: Response) {
+    const {rollNumber , password } = req.body;
+
+    const user =await userModel.findOne({
+        rollNumber :rollNumber
+    }).select("+password")
+    if(!user){
+        throw new AppError("User not found", 404);
+    }
+    const isValidPassword : boolean = await user.comparePassword(password);
+
+    if (!isValidPassword) {
+        throw new AppError("Invalid password", 401);
+    }
+    const token = await generateToken(user);
+
+    res.cookie("token", token)
+
+    res.status(200).json({
+        message:"User LogIn Successfully",
+        user: {
+            _id: user._id,
+            rollNumber: user.rollNumber,
+            role: user.role
+        },
+        token
+    })
+
+}
     
 async function logoutUser(req: Request, res: Response ) {}
 
@@ -116,6 +144,9 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     secure: false, // Set to true if using HTTPS
     sameSite: "strict",
     });
+
+    //Temprory password sending via mail
+    await sendPasswordEmail(user.rollNumber, password);
 
     res.status(201).json({
         message:"User Created Successfully",

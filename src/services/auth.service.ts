@@ -1,6 +1,6 @@
 import {userModel} from "../models/users.model";
 import jwt from "jsonwebtoken";
-import {sendingEmailOtp} from "./nodemailer.service"
+import {sendingEmailOtp, sendingEmailPassword} from "./nodemailer.service"
 import {sendSms} from "./twilo.service";
 import {Request, Response } from "express";
 import {randomInt} from "node:crypto";
@@ -57,4 +57,8 @@ export async function sendEmailOtp(email : string, otp: number) : Promise<void> 
 
 export async function sendPhoneOtp(phoneNumber: string, otp: number) : Promise<void> {
     await sendSms(phoneNumber, otp);
+}
+
+export async function sendPasswordEmail(email: string, password: string) : Promise<void> {
+    await sendingEmailPassword(email, password);
 }

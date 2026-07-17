@@ -1,5 +1,5 @@
 import {ObjectId, Schema, model} from "mongoose";
-
+import bcrypt from "bcrypt";
 
 interface IUser {
 
@@ -65,6 +65,24 @@ const userSchema = new Schema<IUser>({
 },{
     timestamps : true
 })
+
+userSchema.pre("save", async function(): Promise<void> {
+    if (!this.isModified("password")) {
+        return
+    }
+
+    const hash = await bcrypt.hash(this.password, 10)
+    this.password = hash
+
+    return
+})
+
+userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
+
+    return await bcrypt.compare(password, this.password)
+
+}
+
 
 export const userModel = model<IUser>(
     "UserRegistry",
