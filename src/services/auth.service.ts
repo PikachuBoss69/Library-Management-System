@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
-const secretKey = process.env.JWT_SECRET; 
+const secretKey = process.env.JWT_SECRET_KEY; 
 export async function generatePassword() : Promise<string> {
     // Implementation for generating a random password
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -37,8 +37,9 @@ export async function generateOtp() : Promise<number> {
 }
 
 export async function generateToken(user: any) : Promise<string> {
+
     if (!secretKey) {
-    throw new Error("JWT_SECRET is missing");
+        throw new Error("JWT_SECRET is missing");
     }
     return jwt.sign({ userId: user._id }, secretKey, { expiresIn: "3d" });
 

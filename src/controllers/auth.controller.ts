@@ -31,41 +31,55 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
     await verifyCredentials(rollNumber);
 
 
+    return ;
     }catch(error){
          throw error;
     }
 
-    return ;
 
 }
 
-async function loginUser(req: Request, res: Response) {
-    const {rollNumber , password } = req.body;
+export async function loginUser(req: Request, res: Response): Promise<void> {
+    try{
 
-    const user =await userModel.findOne({
-        rollNumber :rollNumber
-    }).select("+password")
-    if(!user){
-        throw new AppError("User not found", 404);
+        const {rollNumber , password } = req.body;
+
+
+        
+        const user =await userModel.findOne({
+            rollNumber :rollNumber
+        }).select("+password");
+
+        if(!user){
+            throw new AppError("User not found", 404);
+        }
+      
+
+        const isValidPassword : boolean = await user.comparePassword(password);
+
+        if (!isValidPassword) {
+            throw new AppError("Invalid password", 401);
+        }
+
+        const token = await generateToken(user);
+
+        console.log("Generated token for user:"); // Log the generated token
+
+        res.cookie("token", token)
+
+        res.status(200).json({
+            message:"User LogIn Successfully",
+            user: {
+                _id: user._id,
+                rollNumber: user.rollNumber,
+                role: user.role
+            },
+            token
+        });
+        return ;
+    }catch(error){
+        throw error;
     }
-    const isValidPassword : boolean = await user.comparePassword(password);
-
-    if (!isValidPassword) {
-        throw new AppError("Invalid password", 401);
-    }
-    const token = await generateToken(user);
-
-    res.cookie("token", token)
-
-    res.status(200).json({
-        message:"User LogIn Successfully",
-        user: {
-            _id: user._id,
-            rollNumber: user.rollNumber,
-            role: user.role
-        },
-        token
-    })
 
 }
     
@@ -132,10 +146,20 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     //Create a random password for the user, which will be changed later on first login by the user
     let password = await generatePassword();
 
-
+    
     //Create a new User in the database with the provided roll number, password, and role
     const user = await createUser(rollNumber, password, role);
     
+    const userEmail= await StudentRegistry.findOne({rollNumber});
+    
+    if(!userEmail) {
+        throw new AppError("Student Email not found", 404);
+    }
+
+    //Temprory password sending via mail
+    await sendPasswordEmail(userEmail.collegeEmail, password);
+
+
     const token = await generateToken(user);
 
 
@@ -145,9 +169,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     sameSite: "strict",
     });
 
-    //Temprory password sending via mail
-    await sendPasswordEmail(user.rollNumber, password);
-
+    
     res.status(201).json({
         message:"User Created Successfully",
         user: {
