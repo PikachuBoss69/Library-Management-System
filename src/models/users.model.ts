@@ -1,8 +1,8 @@
-import {ObjectId, Schema, model, Model} from "mongoose";
+import {ObjectId, Schema, model, Model, HydratedDocument} from "mongoose";
 import bcrypt from "bcrypt";
 
 
-interface IUser {
+export interface IUser {
 
     rollNumber: string;
 
@@ -22,7 +22,7 @@ interface IUser {
 
 }
 
-interface IUserMethods {
+export interface IUserMethods {
     comparePassword(password: string): Promise<boolean>;
 }
 
@@ -91,6 +91,7 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 }
 
+export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
 
 export const userModel = model<IUser, IUserModel>(
     "UserRegistry",
