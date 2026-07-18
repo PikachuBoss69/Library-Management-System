@@ -12,7 +12,7 @@ interface JwtPayload {
 }
 
 
-async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
     
         const token = req.cookies.token || req.headers.authorization?.split(" ")[ 1 ];

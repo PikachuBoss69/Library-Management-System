@@ -5,6 +5,7 @@ import {sendSms} from "./twilo.service";
 import {Request, Response } from "express";
 import {randomInt} from "node:crypto";
 import dotenv from "dotenv";
+import { AppError } from "../utils/AppError";
 
 dotenv.config();
 
@@ -39,7 +40,7 @@ export async function generateOtp() : Promise<number> {
 export async function generateToken(user: any) : Promise<string> {
 
     if (!secretKey) {
-        throw new Error("JWT_SECRET is missing");
+        throw new AppError("JWT_SECRET is missing",400);
     }
     return jwt.sign({ userId: user._id }, secretKey, { expiresIn: "3d" });
 
@@ -47,7 +48,7 @@ export async function generateToken(user: any) : Promise<string> {
 
 export async function verifyToken(token: string) {
     if (!secretKey) {
-        throw new Error("JWT_SECRET is missing");
+        throw new AppError("JWT_SECRET is missing",400);
     }
     return jwt.verify(token, secretKey);
 }
@@ -63,3 +64,19 @@ export async function sendPhoneOtp(phoneNumber: string, otp: number) : Promise<v
 export async function sendPasswordEmail(email: string, password: string) : Promise<void> {
     await sendingEmailPassword(email, password);
 }
+
+export async function changepassword(user : any, newPassword : string) : Promise<void>{
+
+                const isSamePassword : boolean = await user.comparePassword(newPassword);
+        
+                if (isSamePassword) {
+                    throw new AppError("New password is Same as Previous Password", 409);
+                }
+        
+                user.password = newPassword;
+                user.isFirstLogin = false;
+        
+                await user.save();
+
+                return ;
+    }

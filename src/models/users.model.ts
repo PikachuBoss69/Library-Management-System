@@ -26,8 +26,10 @@ export interface IUserMethods {
     comparePassword(password: string): Promise<boolean>;
 }
 
-
+//For future use when we create a custom model with static methods, we can define the IUserModel interface here. For now, it extends the Model<IUser> interface without adding any additional methods.
 interface IUserModel extends Model<IUser, {}, IUserMethods> {}
+
+export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     
@@ -91,7 +93,7 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 }
 
-export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
+
 
 export const userModel = model<IUser, IUserModel>(
     "UserRegistry",

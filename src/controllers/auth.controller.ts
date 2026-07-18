@@ -3,7 +3,7 @@ import {StudentRegistry} from "../models/studentRegistry.model";
 import OtpModel from "../models/otp.model";
 import jwt from "jsonwebtoken";
 import {Request, Response } from "express";
-import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, createUser, generatePassword, sendPasswordEmail} from "../services/auth.service";
+import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, createUser, generatePassword, sendPasswordEmail, changepassword} from "../services/auth.service";
 import {AppError} from "../utils/AppError";
 import dotenv from "dotenv";
 
@@ -212,3 +212,42 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     }          
 }
 
+export async function changePassword(req: Request, res: Response): Promise<void> {
+    try{
+        const { newPassword, retypePassword } = req.body;
+
+        if(!newPassword || !retypePassword) {
+            throw new AppError("Password Not found", 404);
+        }
+
+        if(newPassword !== retypePassword) {    
+            throw new AppError("Passwords do not match", 400);
+        }
+
+        const user = req.user;
+        if(!user){
+            throw new AppError("user not found",404)
+        }
+
+        await changepassword(user, newPassword);
+
+        res.status(200).json({
+            message : "New password created successfully",
+            status : "Success",
+        });
+
+        return ;
+
+    }catch(error){
+            if (error instanceof AppError) {
+        throw error;
+        }
+
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
+
+    }
+
+}
