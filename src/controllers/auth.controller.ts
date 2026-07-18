@@ -33,7 +33,14 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
 
     return ;
     }catch(error){
-         throw error;
+        if (error instanceof AppError) {
+        throw error;
+        }
+
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
     }
 
 
@@ -78,7 +85,14 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
         });
         return ;
     }catch(error){
+        if (error instanceof AppError) {
         throw error;
+        }
+
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
     }
 
 }
@@ -187,7 +201,14 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     return;
 
     }catch(error){
+        if (error instanceof AppError) {
         throw error;
+        }
+
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
     }          
 }
 

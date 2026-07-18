@@ -38,6 +38,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction): 
         return next()
 
     } catch (error) {
+        if (error instanceof AppError) {
         throw error;
+        }
+
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
     }
 }
