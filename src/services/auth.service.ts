@@ -1,4 +1,4 @@
-import {userModel} from "../models/users.model";
+import {IUserDocument, userModel} from "../models/users.model";
 import jwt from "jsonwebtoken";
 import {sendingEmailOtp, sendingEmailPassword} from "./nodemailer.service"
 import {sendSms} from "./twilo.service";
@@ -20,8 +20,17 @@ export async function generatePassword() : Promise<string> {
     return randomPassword;
 }
 
-export async function createUser(rollNumber: string, password: string, role: "student" | "librarian" | "admin") : Promise<any> {
-    return userModel.create({ rollNumber, password, role });
+export async function createUser( rollNumber: string, password: string, role: "student" ) : Promise<IUserDocument> {
+    const user = await userModel.create({ rollNumber, password, role });
+
+    // Generate a readable userId AFTER creation using the auto-generated _id
+    const year = new Date().getFullYear();
+    const shortId = user._id.toString().slice(-6).toUpperCase(); // Last 6 hex chars
+    user.userId = `BTKIT${year}${shortId}`;  // e.g., BTKIT2026A3F2B1
+    
+    await user.save();
+    
+    return user;
 }
 
 export function compareOtps(userOtp: number, generatedOtp: number): boolean {
@@ -78,4 +87,4 @@ export async function changepassword(user : any, newPassword : string) : Promise
                 await user.save();
 
                 return ;
-    }
+}

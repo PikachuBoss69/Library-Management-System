@@ -52,6 +52,12 @@ const studentRegistrySchema = new Schema<IStudentRegistry>(
             type: String,
             required: true,
         },
+
+        course : {
+            type : String,
+            required : true,
+        },
+
         branch: {
             type: String,
             required: true,

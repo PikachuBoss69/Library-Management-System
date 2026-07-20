@@ -4,6 +4,8 @@ import bcrypt from "bcrypt";
 
 export interface IUser {
 
+    userId : string;
+
     rollNumber: string;
 
     password: string;
@@ -32,6 +34,12 @@ interface IUserModel extends Model<IUser, {}, IUserMethods> {}
 export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
+    userId : {
+        type : String,
+        required : true,
+        unique : true,
+        trim : true
+    },
     
     rollNumber : {
         type: String,

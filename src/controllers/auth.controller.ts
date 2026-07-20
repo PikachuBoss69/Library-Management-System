@@ -16,7 +16,7 @@ interface VerificationResult {
 export async function registerUser(req: Request, res: Response) : Promise<void> {
     try{
 
-    const {rollNumber, role} = req.body;
+    const {rollNumber} = req.body;
         
     //Checks whether the provided roll number already exists in the database or not
     const isExistingUser = await userModel.findOne({rollNumber});
@@ -34,7 +34,6 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
             status: "Success",
         });
 
-    return ;
     }catch(error){
         if (error instanceof AppError) {
         throw error;
@@ -185,10 +184,9 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
 
     //Create a random password for the user, which will be changed later on first login by the user
     let password = await generatePassword();
-
     
     //Create a new User in the database with the provided roll number, password, and role
-    const user = await createUser(rollNumber, password, role);
+    const user = await createUser( rollNumber, password, role);
     
     const userEmail= await StudentRegistry.findOne({rollNumber});
     
