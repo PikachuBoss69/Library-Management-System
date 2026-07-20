@@ -51,13 +51,14 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
 export async function loginUser(req: Request, res: Response): Promise<void> {
     try{
 
-        const {rollNumber , password } = req.body;
+        const {userId , password } = req.body;
 
 
         
         const user =await userModel.findOne({
-            rollNumber :rollNumber
+            userId : userId
         }).select("+password");
+
 
         if(!user){
             throw new AppError("User not found", 404);

@@ -23,10 +23,8 @@ export async function generatePassword() : Promise<string> {
 export async function createUser( rollNumber: string, password: string, role: "student" ) : Promise<IUserDocument> {
     const user = await userModel.create({ rollNumber, password, role });
 
-    // Generate a readable userId AFTER creation using the auto-generated _id
-    const year = new Date().getFullYear();
-    const shortId = user._id.toString().slice(-6).toUpperCase(); // Last 6 hex chars
-    user.userId = `BTKIT${year}${shortId}`;  // e.g., BTKIT2026A3F2B1
+   
+    user.userId = `STU${rollNumber}`; 
     
     await user.save();
     

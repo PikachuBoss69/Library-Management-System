@@ -6,7 +6,9 @@ export interface IUser {
 
     userId : string;
 
-    rollNumber: string;
+    rollNumber?: string;
+
+    employeeId?: string;
 
     password: string;
 
@@ -43,8 +45,15 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     
     rollNumber : {
         type: String,
-        required:[true,"Enter Roll Number to Continue"],
-        unique:[true,"User Already Exist"],
+        unique: true,
+        sparse: true,
+        trim : true
+    },
+
+    employeeId : {
+        type: String,
+        unique: true,
+        sparse: true,
         trim : true
     },
 
@@ -56,8 +65,8 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     },
 
     role : {
-        type : String,
-        enum : ["student", "librarian", "admin"], 
+        type : String, 
+        enum : ["student", "librarian", 'admin' ],
         default : "student",
         required : true
     },
