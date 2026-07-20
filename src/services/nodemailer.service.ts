@@ -1,7 +1,7 @@
-import dotenv from 'dotenv'
+
 import {createTransport, getTestMessageUrl} from "nodemailer";
 import { AppError } from '../utils/AppError';
-dotenv.config();
+
 
 const bank_email = process.env.EMAIL_USER
 const client_id = process.env.CLIENT_ID

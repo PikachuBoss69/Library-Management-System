@@ -4,10 +4,9 @@ import {sendingEmailOtp, sendingEmailPassword} from "./nodemailer.service"
 import {sendSms} from "./twilo.service";
 import {Request, Response } from "express";
 import {randomInt} from "node:crypto";
-import dotenv from "dotenv";
+
 import { AppError } from "../utils/AppError";
 
-dotenv.config();
 
 
 const secretKey = process.env.JWT_SECRET_KEY; 

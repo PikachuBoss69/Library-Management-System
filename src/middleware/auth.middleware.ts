@@ -1,9 +1,8 @@
 import  {userModel} from "../models/users.model";
 import jwt from "jsonwebtoken";
-import dotenv from 'dotenv';
 import {Request, Response, NextFunction} from "express";
 import { AppError } from "../utils/AppError";
-dotenv.config();
+
 
 const secret_key = process.env.JWT_SECRET_KEY;
 

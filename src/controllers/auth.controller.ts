@@ -5,9 +5,7 @@ import jwt from "jsonwebtoken";
 import {Request, Response } from "express";
 import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, createUser, generatePassword, sendPasswordEmail, changepassword} from "../services/auth.service";
 import {AppError} from "../utils/AppError";
-import dotenv from "dotenv";
 
-dotenv.config();
 
 const secretKey = process.env.JWT_SECRET;
 
@@ -30,6 +28,11 @@ export async function registerUser(req: Request, res: Response) : Promise<void> 
     //Send Email and Phone OTP to the user for verification
     await verifyCredentials(rollNumber);
 
+    res.status(200).json({
+            message:"Otp send Successfully",
+            
+            status: "Success",
+        });
 
     return ;
     }catch(error){
@@ -96,8 +99,30 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
     }
 
 }
+
     
-async function logoutUser(req: Request, res: Response ) {}
+export async function logoutUser(req: Request, res: Response): Promise<void> {
+    try {
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+            throw new AppError("Token is Missing", 401);
+        }
+
+        res.clearCookie("token");
+
+        res.status(200).json({
+            message: "User logged out successfully",
+            status: "Success",
+        });
+    } catch (error) {
+        if (error instanceof AppError) {
+            throw error;
+        }
+        throw new AppError("Internal Server Error", 500);
+    }
+}
+
 
 async function verifyCredentials(rollNumber: string) : Promise<void>  {
     const student = await StudentRegistry.findOne({
@@ -118,6 +143,7 @@ async function verifyCredentials(rollNumber: string) : Promise<void>  {
 
     await sendEmailOtp(student.collegeEmail, emailOtp);
     await sendPhoneOtp(student.phoneNumber, phoneOtp);
+
 
     return ;
 }
@@ -211,6 +237,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
         );
     }          
 }
+
 
 export async function changePassword(req: Request, res: Response): Promise<void> {
     try{
