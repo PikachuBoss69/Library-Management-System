@@ -189,6 +189,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     //Create a new User in the database with the provided roll number, password, and role
     const user = await createUser( rollNumber, password, role);
     
+
     const userEmail= await StudentRegistry.findOne({rollNumber});
     
     if(!userEmail) {
@@ -196,7 +197,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     }
 
     //Temprory password sending via mail
-    await sendPasswordEmail(userEmail.collegeEmail, password);
+    await sendPasswordEmail(user.userId, userEmail.collegeEmail, password);
 
 
     const token = await generateToken(user);

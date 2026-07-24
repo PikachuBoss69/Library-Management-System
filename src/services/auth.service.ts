@@ -67,8 +67,8 @@ export async function sendPhoneOtp(phoneNumber: string, otp: number) : Promise<v
     await sendSms(phoneNumber, otp);
 }
 
-export async function sendPasswordEmail(email: string, password: string) : Promise<void> {
-    await sendingEmailPassword(email, password);
+export async function sendPasswordEmail(userId: string ,email: string, password: string) : Promise<void> {
+    await sendingEmailPassword(userId, email, password);
 }
 
 export async function changepassword(user : any, newPassword : string) : Promise<void>{
