@@ -7,11 +7,7 @@ import {generateToken, compareOtps, sendPhoneOtp, sendEmailOtp, generateOtp, cre
 import {AppError} from "../utils/AppError";
 
 
-const secretKey = process.env.JWT_SECRET;
-
-interface VerificationResult {
-    isVerified: boolean;
-}
+const secretKey = process.env["JWT_SECRET"];
 
 export async function registerUser(req: Request, res: Response) : Promise<void> {
     try{
@@ -103,7 +99,7 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
     
 export async function logoutUser(req: Request, res: Response): Promise<void> {
     try {
-        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+        const token = req.cookies["token"] || req.headers.authorization?.split(" ")[1];
 
         if (!token) {
             throw new AppError("Token is Missing", 401);

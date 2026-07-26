@@ -1,12 +1,12 @@
 
-import {createTransport, getTestMessageUrl} from "nodemailer";
+import {createTransport} from "nodemailer";
 import { AppError } from '../utils/AppError';
 
 
-const bank_email = process.env.EMAIL_USER
-const client_id = process.env.CLIENT_ID
-const client_secret = process.env.CLIENT_SECRET
-const refresh_token = process.env.REFRESH_TOKEN
+const bank_email = process.env["EMAIL_USER"];
+const client_id = process.env["CLIENT_ID"];
+const client_secret = process.env["CLIENT_SECRET"];
+const refresh_token = process.env["REFRESH_TOKEN"];
 
 const transporter = createTransport({
   host: "smtp.gmail.com",

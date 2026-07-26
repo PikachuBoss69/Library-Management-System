@@ -6,12 +6,27 @@
     "rootDir": "./src",
     "outDir": "./dist",
 
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     "strict": true,
 
+    "allowUnusedLabels": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
 
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "erasableSyntaxOnly": true,
+     "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
 
     "resolveJsonModule": true,
 

@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import {z} from 'zod';
 
 export interface IBook {
     title: string;

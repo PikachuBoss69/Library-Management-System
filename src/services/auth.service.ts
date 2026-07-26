@@ -2,14 +2,12 @@ import {IUserDocument, userModel} from "../models/users.model";
 import jwt from "jsonwebtoken";
 import {sendingEmailOtp, sendingEmailPassword} from "./nodemailer.service"
 import {sendSms} from "./twilo.service";
-import {Request, Response } from "express";
 import {randomInt} from "node:crypto";
-
 import { AppError } from "../utils/AppError";
 
 
 
-const secretKey = process.env.JWT_SECRET_KEY; 
+const secretKey = process.env["JWT_SECRET_KEY"]; 
 export async function generatePassword() : Promise<string> {
     // Implementation for generating a random password
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
