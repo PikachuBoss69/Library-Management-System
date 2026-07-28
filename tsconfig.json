@@ -23,7 +23,7 @@
     "allowUnreachableCode": false,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "erasableSyntaxOnly": true,
      "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,

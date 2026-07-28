@@ -1,21 +1,23 @@
 import {BookModel} from '../models/books.model';
 import { BookCopyModel } from '../models/bookCopies.model';
-import {createBookSchema} from '@/validators/book.validation';
-import jwt from "jsonwebtoken";
-import {Request, Response } from "express";
+import {Request, Response, NextFunction } from "express";
 import {AppError} from "../utils/AppError";
 
 interface BookParams {
     bookId: string;
+}
+interface BookCopyParams {
+    bookId : string;
+    copyId : string
 }
 
 
 export async function addNewBook(req: Request, res: Response): Promise<void>{
     try{
 
-        const { title, author, isbn, category, publicationYear, language, description, totalCopies, availableCopies} = req.body;
+        const { title, author, isbn, category, publicationYear, language, description, totalCopies} = req.body;
         
-        const book = await BookModel.create({title, author, isbn, category, publicationYear, language, description, totalCopies, availableCopies});
+        const book = await BookModel.create({title, author, isbn, category, publicationYear, language, description, totalCopies: totalCopies ?? 0, availableCopies: totalCopies ?? 0});
         
         res.status(200).json({
             message : "Book Created Successfully",
@@ -32,11 +34,13 @@ export async function addNewBook(req: Request, res: Response): Promise<void>{
             },
             status : "Success",
         });
-    }catch(error){
+    }catch(error: any){
         if (error instanceof AppError) {
-        throw error;
+            throw error;
         }
-
+        if (error.code === 11000){
+            throw new AppError("Book with this ISBN already exists", 409);
+        } 
         throw new AppError(
             "Internal Server Error",
             500
@@ -49,7 +53,7 @@ export async function addBookCopies(req: Request<BookParams>, res: Response): Pr
     try{
         const { bookId } = req.params;
 
-        const {accessionNumber, purchaseDate, price, availableCopies} = req.body ;  
+        const {accessionNumber, purchaseDate, price, condition} = req.body ;  
 
         const book = await BookModel.findById(bookId);
 
@@ -57,7 +61,7 @@ export async function addBookCopies(req: Request<BookParams>, res: Response): Pr
             throw new AppError("Book not found", 404);
         }
 
-        const bookcopy = await BookCopyModel.create({bookId, accessionNumber, purchaseDate, price});
+        const bookcopy = await BookCopyModel.create({bookId, accessionNumber, purchaseDate, price, condition});
        
         await BookModel.findByIdAndUpdate(
             bookId,
@@ -93,14 +97,210 @@ export async function addBookCopies(req: Request<BookParams>, res: Response): Pr
     
 }
 
-export async function getBookDetails(req: Request, res: Response): Promise<void>{
+export async function getBookDetails(req: Request<BookParams>, res: Response): Promise<void> {
+    try {
+        const { bookId } = req.params;
 
+        const book = await BookModel.findById(bookId);
+        if (!book) {
+            throw new AppError("Book not found", 404);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book details fetched successfully",
+            data: book ,
+        });
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError("Internal Server Error", 500);
+    }
 }
 
-export async function updateBook(req: Request, res: Response): Promise<void>{
+export async function updateBook(req: Request<BookParams>, res: Response): Promise<void> {
+    try {
+        const { bookId } = req.params;
 
+        const { title, author, isbn, category, publicationYear, language, description } = req.body;
+
+        const book = await BookModel.findByIdAndUpdate(
+            bookId,
+            { title, author, isbn, category, publicationYear, language, description },
+            { new: true, runValidators: true }
+        );
+
+        if (!book) {
+            throw new AppError("Book not found", 404);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book updated successfully",
+            data: book,
+        });
+    } catch (error: any) {
+        if (error instanceof AppError) throw error;
+        if (error.code === 11000) throw new AppError("Book with this ISBN already exists", 409);
+        throw new AppError("Internal Server Error", 500);
+    }
 }
 
-export async function getAllBook(req: Request, res: Response): Promise<void>{
+export async function deleteBook(req: Request<BookParams>, res: Response): Promise<void> {
+    try {
+        const { bookId } = req.params;
 
+        const activeCopies = await BookCopyModel.countDocuments({ bookId, status: "borrowed" });
+        if (activeCopies > 0) {
+            throw new AppError("Cannot delete book with copies currently borrowed", 409);
+        }
+
+        const book = await BookModel.findByIdAndDelete(bookId);
+        if (!book) {
+            throw new AppError("Book not found", 404);
+        }
+
+        await BookCopyModel.deleteMany({ bookId });
+
+        res.status(200).json({
+            success: true,
+            message: "Book deleted successfully",
+            data: null,
+        });
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError("Internal Server Error", 500);
+    }
+}
+
+export async function getAllBook(req: Request, res: Response): Promise<void> {
+    try {
+        const { page = "1", limit = "10", category, search } = req.query;
+
+        const pageNum = Math.max(parseInt(page as string, 10) || 1, 1);
+        const limitNum = Math.max(parseInt(limit as string, 10) || 10, 1);
+
+        const filter: Record<string, unknown> = {};
+        if (category) filter.category = category;
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { author: { $regex: search, $options: "i" } },
+                { isbn: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        const [books, total] = await Promise.all([
+            BookModel.find(filter)
+                .skip((pageNum - 1) * limitNum)
+                .limit(limitNum)
+                .sort({ createdAt: -1 }),
+            BookModel.countDocuments(filter),
+        ]);
+
+        res.status(200).json({
+            success: true,
+            message: "Books fetched successfully",
+            data: books,
+            meta: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
+        });
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError("Internal Server Error", 500);
+    }
+}
+
+export async function getAllBookCopies(req: Request<BookParams>, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const { bookId } = req.params;
+        const copies = await BookCopyModel.find({ bookId });
+
+        res.status(200).json({
+            success: true,
+            message: "Book copies fetched successfully",
+            data: copies,
+        });
+    } catch (error) {
+        next(new AppError("Internal Server Error", 500));
+    }
+}
+
+export async function getBookCopyDetails(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const { copyId } = req.params;
+
+        const copy = await BookCopyModel.findById(copyId);
+        if (!copy) {
+            throw new AppError("Book copy not found", 404);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book copy fetched successfully",
+            data: copy,
+        });
+    } catch (error) {
+        if (error instanceof AppError) return next(error);
+        next(new AppError("Internal Server Error", 500));
+    }
+}
+
+export async function updateBookCopy(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const { copyId } = req.params;
+        const {condition, price } = req.body;
+
+        const copy = await BookCopyModel.findById(copyId);
+        if (!copy) {
+            throw new AppError("Book copy not found", 404);
+        }
+
+        if (condition !== undefined) copy.condition = condition;
+        if (price !== undefined) copy.price = price;
+
+        await copy.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Book copy updated successfully",
+            data: copy,
+        });
+    } catch (error) {
+        if (error instanceof AppError) return next(error);
+        next(new AppError("Internal Server Error", 500));
+    }
+}
+
+export async function deleteBookCopy(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const { copyId } = req.params;
+
+        const copy = await BookCopyModel.findById(copyId);
+        if (!copy) {
+            throw new AppError("Book copy not found", 404);
+        }
+
+        if (copy.status === "borrowed") {
+            throw new AppError("Cannot delete a copy that is currently borrowed", 409);
+        }
+
+        const book = await BookModel.findById(copy.bookId);
+        if (book) {
+            book.totalCopies = Math.max(book.totalCopies - 1, 0);
+            if (copy.status === "available") {
+                book.availableCopies = Math.max(book.availableCopies - 1, 0);
+            }
+            await book.save();
+        }
+
+        await copy.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: "Book copy deleted successfully",
+            data: null,
+        });
+    } catch (error) {
+        if (error instanceof AppError) return next(error);
+        next(new AppError("Internal Server Error", 500));
+    }
 }
