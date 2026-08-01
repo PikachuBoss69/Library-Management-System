@@ -3,10 +3,11 @@ import { BookCopyModel } from '../models/bookCopies.model';
 import {Request, Response, NextFunction } from "express";
 import {AppError} from "../utils/AppError";
 
-interface BookParams {
+
+type BookParams = {
     bookId: string;
 }
-interface BookCopyParams {
+type BookCopyParams = {
     bookId : string;
     copyId : string
 }
@@ -14,11 +15,11 @@ interface BookCopyParams {
 
 export async function addNewBook(req: Request, res: Response): Promise<void>{
     try{
-
+      
         const { title, author, isbn, category, publicationYear, language, description, totalCopies} = req.body;
-        
+    
         const book = await BookModel.create({title, author, isbn, category, publicationYear, language, description, totalCopies: totalCopies ?? 0, availableCopies: totalCopies ?? 0});
-        
+     
         res.status(200).json({
             message : "Book Created Successfully",
             book : {
@@ -51,7 +52,7 @@ export async function addNewBook(req: Request, res: Response): Promise<void>{
 
 export async function addBookCopies(req: Request<BookParams>, res: Response): Promise<void>{
     try{
-        const { bookId } = req.params;
+        const { bookId } = res.locals.validated.params;
 
         const {accessionNumber, purchaseDate, price, condition} = req.body ;  
 
@@ -99,7 +100,7 @@ export async function addBookCopies(req: Request<BookParams>, res: Response): Pr
 
 export async function getBookDetails(req: Request<BookParams>, res: Response): Promise<void> {
     try {
-        const { bookId } = req.params;
+        const { bookId } = res.locals.validated.params;
 
         const book = await BookModel.findById(bookId);
         if (!book) {
@@ -119,7 +120,7 @@ export async function getBookDetails(req: Request<BookParams>, res: Response): P
 
 export async function updateBook(req: Request<BookParams>, res: Response): Promise<void> {
     try {
-        const { bookId } = req.params;
+        const { bookId } = res.locals.validated.params;
 
         const { title, author, isbn, category, publicationYear, language, description } = req.body;
 
@@ -147,7 +148,7 @@ export async function updateBook(req: Request<BookParams>, res: Response): Promi
 
 export async function deleteBook(req: Request<BookParams>, res: Response): Promise<void> {
     try {
-        const { bookId } = req.params;
+        const { bookId } = res.locals.validated.params;;
 
         const activeCopies = await BookCopyModel.countDocuments({ bookId, status: "borrowed" });
         if (activeCopies > 0) {
@@ -174,14 +175,29 @@ export async function deleteBook(req: Request<BookParams>, res: Response): Promi
 
 export async function getAllBook(req: Request, res: Response): Promise<void> {
     try {
+        
         const { page = "1", limit = "10", category, search } = req.query;
 
+        
         const pageNum = Math.max(parseInt(page as string, 10) || 1, 1);
         const limitNum = Math.max(parseInt(limit as string, 10) || 10, 1);
 
+        // Record<string, unknown> is an index signature.
+        // It means this object can have ANY string key added dynamically.
+        // Example:
+        // filter.category = "Programming"
+        // filter.$or = [...]
         const filter: Record<string, unknown> = {};
+
         if (category) filter.category = category;
+
         if (search) {
+            // $or => Return documents if ANY condition is true.
+            // $regex => Pattern matching (contains search).
+            // $options: "i" => Case-insensitive search.
+            // Example:
+            // search="clean"
+            // Matches: "Clean Code", "clean code", "CLEAN CODE"
             filter.$or = [
                 { title: { $regex: search, $options: "i" } },
                 { author: { $regex: search, $options: "i" } },
@@ -189,11 +205,20 @@ export async function getAllBook(req: Request, res: Response): Promise<void> {
             ];
         }
 
+        // Promise.all() executes independent database queries in parallel.
+        // This is faster than awaiting one after another.
         const [books, total] = await Promise.all([
             BookModel.find(filter)
+                // Skip books from previous pages.
                 .skip((pageNum - 1) * limitNum)
+
+                // Maximum books returned in one page.
                 .limit(limitNum)
+
+                // -1 => Descending order (newest first).
                 .sort({ createdAt: -1 }),
+
+            // Total matching documents (used for pagination).
             BookModel.countDocuments(filter),
         ]);
 
@@ -201,7 +226,14 @@ export async function getAllBook(req: Request, res: Response): Promise<void> {
             success: true,
             message: "Books fetched successfully",
             data: books,
-            meta: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
+
+            // Pagination information for frontend.
+            meta: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                pages: Math.ceil(total / limitNum),
+            },
         });
     } catch (error) {
         if (error instanceof AppError) throw error;
@@ -211,7 +243,7 @@ export async function getAllBook(req: Request, res: Response): Promise<void> {
 
 export async function getAllBookCopies(req: Request<BookParams>, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { bookId } = req.params;
+        const { bookId } = res.locals.validated.params;
         const copies = await BookCopyModel.find({ bookId });
 
         res.status(200).json({
@@ -226,7 +258,7 @@ export async function getAllBookCopies(req: Request<BookParams>, res: Response, 
 
 export async function getBookCopyDetails(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { copyId } = req.params;
+        const { copyId } = res.locals.validated.params;
 
         const copy = await BookCopyModel.findById(copyId);
         if (!copy) {
@@ -246,7 +278,7 @@ export async function getBookCopyDetails(req: Request<BookCopyParams>, res: Resp
 
 export async function updateBookCopy(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { copyId } = req.params;
+        const { copyId } = res.locals.validated.params;
         const {condition, price } = req.body;
 
         const copy = await BookCopyModel.findById(copyId);
@@ -272,7 +304,7 @@ export async function updateBookCopy(req: Request<BookCopyParams>, res: Response
 
 export async function deleteBookCopy(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { copyId } = req.params;
+        const { copyId } = res.locals.validated.params;
 
         const copy = await BookCopyModel.findById(copyId);
         if (!copy) {
@@ -304,3 +336,5 @@ export async function deleteBookCopy(req: Request<BookCopyParams>, res: Response
         next(new AppError("Internal Server Error", 500));
     }
 }
+
+

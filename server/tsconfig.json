@@ -9,7 +9,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-
     "strict": true,
 
     "allowUnusedLabels": false,
