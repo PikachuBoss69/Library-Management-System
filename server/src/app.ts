@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import { errorHandler } from "./middleware/AppError.middleware";
 import authRoutes from "./routes/auth.route";
 import bookManagementRoutes from "./routes/bookManagement.route";
+import borrowRoutes from "./routes/borrow.route";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(cookieParser());
 //Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/book", bookManagementRoutes);
+app.use("/api/borrow", borrowRoutes);
 
 // Error handler should be LAST
 app.use(errorHandler);
