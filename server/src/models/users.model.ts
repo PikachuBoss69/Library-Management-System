@@ -1,4 +1,4 @@
-import {Schema, model, Model, HydratedDocument} from "mongoose";
+import {Schema, model, HydratedDocument} from "mongoose";
 import bcrypt from "bcrypt";
 
 
@@ -30,12 +30,11 @@ export interface IUserMethods {
     comparePassword(password: string): Promise<boolean>;
 }
 
-//For future use when we create a custom model with static methods, we can define the IUserModel interface here. For now, it extends the Model<IUser> interface without adding any additional methods.
-interface IUserModel extends Model<IUser, {}, IUserMethods> {}
+
 
 export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
 
-const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
+const userSchema = new Schema<IUser, IUserMethods>({
     userId : {
         type : String,
         required : true,
@@ -112,7 +111,7 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 
 
-export const userModel = model<IUser, IUserModel>(
+export const userModel = model<IUser>(
     "UserRegistry",
     userSchema
 );

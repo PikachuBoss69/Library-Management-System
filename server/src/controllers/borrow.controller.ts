@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
-import { issueBook, updateBookDetails, returnIssuedBook, reportLostBorrow, getBorrowById, getActiveBorrowedBooks, getBorrowHistory, calculateFine } from "../services/borrow.service";
+import { issueBook, updateBookDetails, returnIssuedBook, reportLostBorrow, getBorrowById, getActiveBorrowedBooks, getBorrowHistory } from "../services/borrow.service";
 
 export async function borrowBook(
     req: Request,
@@ -39,14 +39,10 @@ export async function returnBook(
         const borrowRecord = await returnIssuedBook(copyId, receivedBy);
         await updateBookDetails(copyId, "available");
 
-        //Fine Implementation is left , well complete later.......................
-        const fine = await calculateFine(borrowRecord);
-
         res.status(200).json({
             success: true,
             message: "Book returned successfully",
             data: borrowRecord,
-            fine: fine,
         });
     } catch (error) {
         next(new AppError("Failed to return book", 500));
@@ -64,14 +60,10 @@ export async function reportLostBook(
         const borrowRecord = await reportLostBorrow(copyId);
         await updateBookDetails(copyId, "lost");
 
-        //Fine Implementation is left , well complete later.......................
-        const fine = await calculateFine(borrowRecord); 
-
         res.status(200).json({
             success: true,
             message: "Book marked as lost",
             data: borrowRecord,
-            fine: fine,
         });
     } catch (error) {
         next(new AppError("Failed to report lost book", 500));
@@ -108,7 +100,7 @@ export async function getMyBorrowedBooks(
     try {
         const studentId = req.user!._id;
 
-        const borrowedBooks = await getActiveBorrowedBooks(studentId);
+        const borrowedBooks = await getActiveBorrowedBooks(studentId.toString());
 
         res.status(200).json({
             success: true,
@@ -128,7 +120,7 @@ export async function getMyBorrowHistory(
     try {
         const studentId = req.user!._id;
 
-        const history = await getBorrowHistory(studentId);
+        const history = await getBorrowHistory(studentId.toString());
 
         res.status(200).json({
             success: true,
