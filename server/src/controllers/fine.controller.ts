@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as fineService from "../services/fine.service";
+import { AppError } from "@/utils/AppError";
 
 export async function getFineByBorrowId(
     req: Request,
@@ -67,9 +68,16 @@ export async function fineWaived(
         const { fineId } = res.locals.validated.params;
         const { remarks } = req.body;
 
+        const user = req.user;
+        if(!user){
+            throw new AppError("User not found.", 404);
+        }
+        if(user.role !== "admin"){
+            throw new AppError("Only admin can waive fines.", 403);
+        }
         const fine = await fineService.fine_Waived(
             fineId,
-            req.user!,
+            user.toString(),
             remarks
         );
 
@@ -90,12 +98,17 @@ export async function payFineByCash(
 ): Promise<void> {
     try {
         const { fineId } = res.locals.validated.params;
-        const body = req.body;
+        const user = req.user;
+        if(!user){
+            throw new AppError("User not found.", 404);
+        }
+        if(user.role !== "admin" && user.role !== "librarian"){
+            throw new AppError("Only admin or librarian can pay fines.", 403);
+        }
 
         const fine = await fineService.pay_FineByCash(
             fineId,
-            req.user!,
-            body
+            user.toString()
         );
 
         res.status(200).json({

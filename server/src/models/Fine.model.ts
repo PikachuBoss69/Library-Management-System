@@ -7,8 +7,10 @@ export interface IFine {
     reason: string;
     status: "settled" | "pending" | "waived";
     paidDate?: Date;
+    paymentMethod?: "cash" | "upi";
     waivedDate?: Date;
-    waivedBy?: Types.ObjectId;
+    settledBy?: Types.ObjectId;
+    remarks?: string;
 }
 
 const FineSchema = new Schema<IFine>(
@@ -43,15 +45,22 @@ const FineSchema = new Schema<IFine>(
         paidDate: {
             type: Date,
         },
+        paymentMethod : {
+            enum : ["cash", "upi"],
+            type : String,
+        },
 
         waivedDate: {
             type: Date,
         },
 
-        waivedBy: {
+        settledBy: {
             type: Schema.Types.ObjectId,
             ref: "User",
         },
+        remarks :{
+            type: String,
+        }
     },
     {timestamps: true}
 );
