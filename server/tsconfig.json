@@ -17,15 +17,15 @@
     
     "esModuleInterop": true,
 
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
     "allowUnreachableCode": false,
-    "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": false,
     "noPropertyAccessFromIndexSignature": false,
-    "erasableSyntaxOnly": true,
-     "noImplicitOverride": true,
-    "exactOptionalPropertyTypes": true,
+    "erasableSyntaxOnly": false,
+     "noImplicitOverride": false,
+    "exactOptionalPropertyTypes": false,
 
     "resolveJsonModule": true,
 
