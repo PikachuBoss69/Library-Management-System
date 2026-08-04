@@ -1,4 +1,4 @@
-import {Schema, model, HydratedDocument} from "mongoose";
+import {Schema, model, HydratedDocument, Model} from "mongoose";
 import bcrypt from "bcrypt";
 
 
@@ -26,15 +26,17 @@ export interface IUser {
 
 }
 
+interface IUserModel extends Model<IUser, {}, IUserMethods> {}
+
 export interface IUserMethods {
     comparePassword(password: string): Promise<boolean>;
 }
 
 
 
-export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
+export type IUserDocument = HydratedDocument<IUser,IUserModel, IUserMethods>;
 
-const userSchema = new Schema<IUser, IUserMethods>({
+const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     userId : {
         type : String,
         required : true,
@@ -111,7 +113,7 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 
 
-export const userModel = model<IUser>(
+export const userModel = model<IUser, IUserModel>(
     "UserRegistry",
     userSchema
 );
