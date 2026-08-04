@@ -2,7 +2,7 @@ import {Schema, model, Types} from 'mongoose';
 
 export interface IFine {
     borrowId: Types.ObjectId;
-    studentId: Types.ObjectId;
+    userId: Types.ObjectId;
     amount: number;
     reason: string;
     status: "settled" | "pending" | "waived";
@@ -20,7 +20,7 @@ const FineSchema = new Schema<IFine>(
             ref: "Borrow",
             required: true,
         },
-        studentId :{
+        userId :{
             type : Types.ObjectId,
             ref : "User",
             required : true,

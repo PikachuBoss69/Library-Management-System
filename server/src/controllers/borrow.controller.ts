@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
-import { issueBook, updateBookDetails, returnIssuedBook, reportLostBorrow, getBorrowById, getActiveBorrowedBooks, getBorrowHistory } from "../services/borrow.service";
+import { issueBook, updateBookDetails, returnIssuedBook, reportLostBorrow, getBorrowById, getActiveBorrowedBooks, getBorrowHistory, get_OverdueBooks, get_AllBorrowedBooks} from "../services/borrow.service";
+import { BorrowQuery } from "../types/borrow.types";
 
 export async function borrowBook(
     req: Request,
@@ -8,14 +9,14 @@ export async function borrowBook(
     next: NextFunction
 ): Promise<void> {
     try {
-        const { studentId, copyId } = req.body;
+        const { userId, copyId } = req.body;
 
         // Logged in librarian
         const issuedBy = req.user!._id;
 
-        const borrowRecord = await issueBook(studentId, copyId, issuedBy);
+        const borrowRecord = await issueBook(userId, copyId, issuedBy);
 
-        await updateBookDetails(copyId, "borrowed");
+        await updateBookDetails(copyId, "issued");
 
         res.status(201).json({
             success: true,
@@ -98,9 +99,9 @@ export async function getMyBorrowedBooks(
     next: NextFunction
 ): Promise<void> {
     try {
-        const studentId = req.user!._id;
+        const userId = req.user!._id;
 
-        const borrowedBooks = await getActiveBorrowedBooks(studentId.toString());
+        const borrowedBooks = await getActiveBorrowedBooks(userId.toString());
 
         res.status(200).json({
             success: true,
@@ -118,9 +119,9 @@ export async function getMyBorrowHistory(
     next: NextFunction
 ): Promise<void> {
     try {
-        const studentId = req.user!._id;
+        const userId = req.user!._id;
 
-        const history = await getBorrowHistory(studentId.toString());
+        const history = await getBorrowHistory(userId.toString());
 
         res.status(200).json({
             success: true,
@@ -129,5 +130,47 @@ export async function getMyBorrowHistory(
         });
     } catch (error) {
         next(new AppError("Failed to fetch borrow history", 500));
+    }
+}
+
+export async function getAllBorrowedBooks(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const query = res.locals.validated.query;
+
+        const borrows = await get_AllBorrowedBooks(query);
+
+        res.status(200).json({
+            success: true,
+            message: "Borrowed books fetched successfully.",
+            data: borrows,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getOverdueBooks(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const query : BorrowQuery = res.locals.validated.query;
+
+        const borrows = await get_OverdueBooks(query);
+
+        res.status(200).json({
+            success: true,
+            message: "Overdue books fetched successfully.",
+            data: borrows,
+        });
+
+    } catch (error) {
+        next(error);
     }
 }

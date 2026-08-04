@@ -1,7 +1,7 @@
 import {Schema, model, Types } from "mongoose";
 
 export interface IBorrow {
-    studentId: Types.ObjectId;
+    userId: Types.ObjectId;
     copyId: Types.ObjectId;
 
     issueDate: Date;
@@ -17,7 +17,7 @@ export interface IBorrow {
 
 const BorrowSchema = new Schema<IBorrow>(
     {
-        studentId: {
+        userId: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,

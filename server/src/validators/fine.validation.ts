@@ -29,7 +29,7 @@ export const getFineByBorrowIdSchema = z.object({
 
 export const getPendingFinesSchema = z.object({
     query: paginationSchema.extend({
-        studentId: objectId.optional(),
+        userId: objectId.optional(),
         reason: fineReasonSchema.optional(),
         from: z.coerce.date().optional(),
         to: z.coerce.date().optional(),
@@ -39,7 +39,7 @@ export const getPendingFinesSchema = z.object({
 export const getFineHistorySchema = z.object({
     query: paginationSchema.extend({
         status: fineStatusSchema.optional(),
-        studentId: objectId.optional(),
+        userId: objectId.optional(),
         reason: fineReasonSchema.optional(),
         from: z.coerce.date().optional(),
         to: z.coerce.date().optional(),

@@ -3,37 +3,13 @@ import { BorrowModel, IBorrow } from "../models/Borrow.model";
 import { BookCopyModel} from "../models/bookCopies.model";
 import { IFine, FineModel } from "../models/Fine.model";
 import { AppError } from "../utils/AppError";
+import { FineQuery, FineFilter } from "@/types/fine.types";
 
-type FineStatus = "pending" | "settled" | "waived";
-type FineReason = "late_return" | "lost_book" | "damage";
 
-export interface FineQuery {
-    page?: number;
-    limit?: number;
-
-    status?: FineStatus;
-
-    reason?: FineReason;
-
-    studentId?: string;
-
-    from?: string;
-    to?: string;
-}
-
-interface FineFilter {
-    status?: FineStatus;
-    reason?: FineReason;
-    studentId?: string;
-    createdAt?: {
-        $gte?: Date;
-        $lte?: Date;
-    };
-}
 
 export async function createFine(
     borrowId: string,
-    studentId: string,
+    userId: string,
 ): Promise<HydratedDocument<IFine>> {
     
     const borrowRecord = await BorrowModel.findById(borrowId);
@@ -49,7 +25,7 @@ export async function createFine(
 
     const fineRecord = await FineModel.create({
         borrowId,
-        studentId,
+        userId,
         amount: fineAmount,
         reason: borrowRecord.status == "lost" ? "Lost book" : "Late return",
         status: "pending",
@@ -125,8 +101,8 @@ export async function get_AllPendingFines(
         filter.reason = query.reason;
     }
 
-    if (query.studentId) {
-        filter.studentId = query.studentId;
+    if (query.userId) {
+        filter.userId = query.userId;
     }
 
     if (query.from || query.to) {
@@ -156,7 +132,7 @@ export async function get_FineHistory(
         limit = 10,
         status,
         reason,
-        studentId,
+        userId,
         from,
         to,
     } = query;
@@ -171,8 +147,8 @@ export async function get_FineHistory(
         filter.reason = reason;
     }
 
-    if (studentId) {
-        filter.studentId = studentId;
+    if (userId) {
+        filter.userId = userId;
     }
 
     if (from || to) {

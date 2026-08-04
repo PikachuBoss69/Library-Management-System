@@ -39,7 +39,6 @@ router.post(
 router.get(
     "/:borrowId",
     authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(borrowValidation.getBorrowRecordSchema),
     borrowController.getBorrowRecordById
 );
@@ -47,7 +46,6 @@ router.get(
 router.get(
     "/my",
     authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(borrowValidation.getMyBorrowedBooksSchema),
     borrowController.getMyBorrowedBooks
 );
@@ -55,9 +53,23 @@ router.get(
 router.get(
     "/history",
     authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(borrowValidation.getBorrowHistorySchema),
     borrowController.getMyBorrowHistory
 );
 
+router.get(
+    "/all",
+    authMiddleware,
+    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
+    validate(borrowValidation.getAllBorrowedBooksSchema),
+    borrowController.getAllBorrowedBooks
+);
+
+router.get(
+    "/overdue",
+    authMiddleware,
+    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
+    validate(borrowValidation.getOverdueBooksSchema),
+    borrowController.getOverdueBooks
+);
 export default router;
