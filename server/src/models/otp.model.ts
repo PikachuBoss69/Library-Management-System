@@ -3,7 +3,8 @@ import { Schema, model } from "mongoose";
 const OTP_EXPIRY_TIME = 5 * 60 * 1000;
 
 interface IOtp {
-    rollNumber: string;
+    rollNumber?: string;
+    employeId?: string
     emailOtp: number;
     phoneOtp: number;
     createdAt: Date;
@@ -14,7 +15,10 @@ interface IOtp {
 const otpSchema = new Schema<IOtp>({
     rollNumber: {
         type: String,
-        required: true,
+        unique: true,
+    },
+    employeId: {
+        type: String,
         unique: true,
     },
     emailOtp: {
@@ -35,6 +39,5 @@ const otpSchema = new Schema<IOtp>({
     },
 }, { timestamps: true });
 
-const OtpModel = model<IOtp>("Otp", otpSchema);
+export const OtpModel = model<IOtp>("Otp", otpSchema);
 
-export default OtpModel;

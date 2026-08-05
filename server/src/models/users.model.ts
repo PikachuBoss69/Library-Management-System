@@ -8,7 +8,7 @@ export interface IUser {
 
     rollNumber?: string;
 
-    employeeId?: string;
+    employeId?: string;
 
     password: string;
 
@@ -51,7 +51,7 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
         trim : true
     },
 
-    employeeId : {
+    employeId : {
         type: String,
         unique: true,
         sparse: true,
@@ -114,6 +114,6 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 
 export const userModel = model<IUser, IUserModel>(
-    "UserRegistry",
+    "User",
     userSchema
 );

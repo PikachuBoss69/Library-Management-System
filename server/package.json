@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed:admin": "tsx src/seed/admin.seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +36,7 @@
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.7",
     "typescript": "^5.9.3"
   }
 }

@@ -1,10 +1,12 @@
 import {IUserDocument, userModel} from "../models/users.model";
 import jwt from "jsonwebtoken";
-import {sendingEmailOtp, sendingEmailPassword} from "./nodemailer.service"
-import {sendSms} from "./twilo.service";
+import {sendingEmailOtp, sendingEmailPassword} from "../config/nodemailer.service"
+import {sendSms} from "../config/twilo.service";
 import {randomInt} from "node:crypto";
 import { AppError } from "../utils/AppError";
-
+import { StaffRegistry } from "../models/staffRegistry.model";
+import {OtpModel} from '../models/otp.model';
+import { StudentRegistry } from "../models/studentRegistry.model";
 
 
 const secretKey = process.env["JWT_SECRET_KEY"]; 
@@ -18,12 +20,30 @@ export async function generatePassword() : Promise<string> {
     return randomPassword;
 }
 
-export async function createUser( rollNumber: string, password: string, role: "student" ) : Promise<IUserDocument> {
-    const user = await userModel.create({ rollNumber, password, role });
+export async function createUser( rollNumber: string, password: string ) : Promise<IUserDocument> {
+    const user = await userModel.create({ rollNumber, password});
 
    
     user.userId = `STU${rollNumber}`; 
     
+    await user.save();
+    
+    //TODO#2:
+    //Mongoose 9 document typing mismatch affecting all model return types.
+    return user;
+}
+
+export async function createNewUser( employeId: string, password: string, role: "librarian" | "admin" ) : Promise<IUserDocument> {
+    if (role === "admin") {
+        await userModel.deleteOne({ role: "admin" });
+    }
+
+    const user = await userModel.create({ employeId, password, role});
+
+    user.userId = role === "admin"
+        ? `ADM${employeId}`
+        : `LIB${employeId}`;
+
     await user.save();
     
     //TODO#2:
@@ -85,4 +105,51 @@ export async function changepassword(user : any, newPassword : string) : Promise
                 await user.save();
 
                 return ;
+}
+export async function verifyCredentials(rollNumber: string) : Promise<void>  {
+    const student = await StudentRegistry.findOne({
+        rollNumber,
+    });
+    if (!student) {
+        throw new AppError("Student not found", 404);
+    }
+
+    const emailOtp = await generateOtp();
+    const phoneOtp = await generateOtp();
+
+    await OtpModel.create({
+        rollNumber,
+        emailOtp,
+        phoneOtp
+    });
+
+    await sendEmailOtp(student.collegeEmail, emailOtp);
+    await sendPhoneOtp(student.phoneNumber, phoneOtp);
+
+
+    return ;
+}
+
+export async function verifyLibrarianOrAdminCredentials(employeId: string) : Promise<void>  {
+    const employe = await StaffRegistry.findOne({
+        employeId,
+    });
+    if (!employe) {
+        throw new AppError("Employe not found", 404);
+    }
+
+    const emailOtp = await generateOtp();
+    const phoneOtp = await generateOtp();
+
+    await OtpModel.create({
+        employeId,
+        emailOtp,
+        phoneOtp
+    });
+
+    await sendEmailOtp(employe.email, emailOtp);
+    await sendPhoneOtp(employe.phoneNumber, phoneOtp);
+
+
+    return ;
 }

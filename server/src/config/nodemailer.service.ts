@@ -32,6 +32,7 @@ transporter.verify((error: Error | null, success: boolean) => {
 });
 
 // Function to send email
+
 const sendEmail = async (to: string, subject: string, text: string, html: string) => {
   try {
     const info = await transporter.sendMail({

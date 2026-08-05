@@ -3,7 +3,7 @@ import { BorrowModel, IBorrow } from "../models/Borrow.model";
 import { IUser, userModel } from "../models/users.model";
 import { IBookCopy, BookCopyModel } from "../models/bookCopies.model";
 import { AppError } from "../utils/AppError";
-import { BookModel } from "@/models/books.model";
+import { BookModel } from "../models/books.model";
 import { createFine } from "./fine.service";
 import { BorrowQuery, BorrowFilter } from "../types/borrow.types";
 
