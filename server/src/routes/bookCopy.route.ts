@@ -20,15 +20,6 @@ router.post(
 );
 
 router.get(
-    "/:bookId/copies",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookCopyValidation.getBookCopiesSchema),
-    bookCopyController.getAllBookCopies 
-);
-
-
-router.get(
     "/:bookId/copies/:copyId",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),

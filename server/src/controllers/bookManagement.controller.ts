@@ -6,10 +6,9 @@ import {BookParams} from '../types/book.types';
 
 export async function addNewBook(req: Request, res: Response): Promise<void>{
     try{
-      
-        const { title, author, isbn, category, publicationYear, language, description, totalCopies} = req.body;
+        const body = res.locals.validated.body;
     
-        const book = await bookService._addNewBook(title, author, isbn, category, publicationYear, language, description, totalCopies);
+        const book = await bookService.createBook(body);
         
      
         res.status(200).json({
@@ -46,7 +45,7 @@ export async function getBookDetails(req: Request<BookParams>, res: Response): P
     try {
         const { bookId } = res.locals.validated.params;
 
-        const book = await bookService._getBookDetails(bookId);
+        const book = await bookService.getBookById(bookId);
 
         res.status(200).json({
             success: true,
@@ -62,10 +61,8 @@ export async function getBookDetails(req: Request<BookParams>, res: Response): P
 export async function updateBook(req: Request<BookParams>, res: Response): Promise<void> {
     try {
         const { bookId } = res.locals.validated.params;
-
-        const { title, author, isbn, category, publicationYear, language, description } = req.body;
-
-       const book = await bookService._updateBook(bookId, title, author, isbn, category, publicationYear, language, description );
+        const body = res.locals.validated.body;
+       const book = await bookService.updateBook(bookId, body );
        
         res.status(200).json({
             success: true,
@@ -84,7 +81,7 @@ export async function deleteBook(req: Request<BookParams>, res: Response): Promi
     try {
         const { bookId } = res.locals.validated.params;;
 
-        await bookService._deleteBook(bookId);
+        await bookService.deleteBook(bookId);
 
         res.status(200).json({
             success: true,
@@ -101,20 +98,20 @@ export async function getAllBook(req: Request, res: Response): Promise<void> {
     try {
         const query = res.locals.validated.query;
 
-        const [books, total, pageNum, limitNum] = await bookService._getAllBooks(query);
+        const result = await bookService.getAllBooks(query);
         
 
         res.status(200).json({
             success: true,
             message: "Books fetched successfully",
-            data: books,
+            data: result.books,
 
             // Pagination information for frontend.
             meta: {
-                page: pageNum,
-                limit: limitNum,
-                total,
-                pages: Math.ceil(total / limitNum),
+                page: result.page,
+                limit: result.limit,
+                total : result.total,
+                pages: Math.ceil(result.total / result.limit),
             },
         });
     } catch (error) {

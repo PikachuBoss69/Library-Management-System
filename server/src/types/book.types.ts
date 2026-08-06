@@ -3,16 +3,12 @@ import { IBook } from "../models/books.model";
 export type BookParams = {
     bookId: string;
 }
-export type BookCopyParams = {
-    bookId : string;
-    copyId : string
-}
 
 export interface BookQuery {
-    page : number;
-    limit : number;
-    category : string;
-    search : string;
+    page?: string;
+    limit?: string;
+    category?: string;
+    search?: string;
 }
 
 export interface GetAllBooksResponse {
@@ -20,4 +16,15 @@ export interface GetAllBooksResponse {
     total: number;
     page: number;
     limit: number;
+}
+
+export interface BookBodyParams {
+    title? : string;
+    author? : string;
+    isbn? : string;
+    category? : string;
+    publicationYear? : Date;
+    language? : string;
+    description? : string;
+    totalCopies? : number;
 }

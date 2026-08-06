@@ -1,71 +1,158 @@
-import {AppError} from "../utils/AppError";
-import {BookModel, IBook} from '../models/books.model';
+import { AppError } from "../utils/AppError";
+import { BookModel, IBook } from "../models/books.model";
 import { BookCopyModel } from "../models/bookCopies.model";
-import { BookQuery, GetAllBooksResponse } from "../types/book.types";
+import {
+    BookBodyParams,
+    BookQuery,
+    GetAllBooksResponse,
+} from "../types/book.types";
+import mongoose, { ClientSession } from "mongoose";
 
-export async function _addNewBook(title : string,
-    author : string,
-    isbn : string,
-    category : string,
-    publicationYear : Date,
-    language : string,
-    description : string,
-    totalCopies : number
+export async function createBook(
+    body: BookBodyParams,
+    session?: ClientSession
+): Promise<IBook> {
+    try {
+        const [book] = await BookModel.create(
+            [
+                {
+                    ...body,
+                    totalCopies: body.totalCopies ?? 0,
+                    availableCopies: body.totalCopies ?? 0,
+                },
+            ],
+            { session }
+        );
+
+        return book;
+    } catch (error: any) {
+        if (error.code === 11000) {
+            throw new AppError("Book with this ISBN already exists", 409);
+        }
+
+        throw error;
+    }
+}
+
+export async function getBookById(
+    bookId: string,
+    session?: ClientSession
 ): Promise<IBook> {
 
-    const book =  await BookModel.create({title, author, isbn, category, publicationYear, language, description, totalCopies: totalCopies ?? 0, availableCopies: totalCopies ?? 0});
-    
-    return book;
-}
-
-export async function _getBookDetails(bookId : string){
-    const book = await BookModel.findById(bookId);
-        if (!book) {
-            throw new AppError("Book not found", 404);
-        }
-    return book;
-}
-
-export async function _updateBook(
-    bookId : string,
-    title : string,
-    author : string,
-    isbn : string,
-    category : string,
-    publicationYear : Date,
-    language : string,
-    description : string,
-    ): Promise<IBook>{
-
-    const book = await BookModel.findByIdAndUpdate(
-            bookId,
-            { title, author, isbn, category, publicationYear, language, description },
-            { new: true, runValidators: true }
-        );
-    if (!book) {
-            throw new AppError("Book not found", 404);
-        }
-
-    return book;
-}
-
-export async function _deleteBook(bookId : string): Promise<void>{
-    const activeCopies = await BookCopyModel.countDocuments({ bookId, status: "borrowed" });
-    if (activeCopies > 0) {
-        throw new AppError("Cannot delete book with copies currently borrowed", 409);
-    }
-
-    const book = await BookModel.findByIdAndDelete(bookId);
+    const book = await BookModel
+        .findById(bookId)
+        .session(session ?? null);
 
     if (!book) {
         throw new AppError("Book not found", 404);
-    
     }
-    await BookCopyModel.deleteMany({ bookId });   
-    
+
+    return book;
 }
-export async function _getAllBooks(
-    query: BookQuery
+
+export async function updateBook(
+    bookId: string,
+    body: BookBodyParams,
+    session?: ClientSession
+): Promise<IBook> {
+
+    try {
+
+        const book = await BookModel.findByIdAndUpdate(
+            bookId,
+            {
+                ...body,
+            },
+            {
+                new: true,
+                runValidators: true,
+                session,
+            }
+        );
+
+        if (!book) {
+            throw new AppError(
+                "Book not found",
+                404
+            );
+        }
+
+        return book;
+
+    } catch (error: any) {
+
+        if (error.code === 11000) {
+            throw new AppError(
+                "Book with this ISBN already exists",
+                409
+            );
+        }
+
+        throw error;
+    }
+
+}
+
+export async function deleteBook(
+    bookId: string
+): Promise<void> {
+
+    const session = await mongoose.startSession();
+
+    try {
+
+        session.startTransaction();
+
+        const borrowedCopies =
+            await BookCopyModel.countDocuments({
+                bookId,
+                status: "borrowed",
+            }).session(session);
+
+        if (borrowedCopies > 0) {
+            throw new AppError(
+                "Cannot delete borrowed books",
+                409
+            );
+        }
+
+        const deleted =
+            await BookModel.findByIdAndDelete(
+                bookId,
+                { session }
+            );
+
+        if (!deleted) {
+            throw new AppError(
+                "Book not found",
+                404
+            );
+        }
+
+        await BookCopyModel.deleteMany(
+            { bookId },
+            { session }
+        );
+
+        await session.commitTransaction();
+
+    } catch (error) {
+
+        await session.abortTransaction();
+
+        throw error;
+
+    } finally {
+
+        session.endSession();
+
+    }
+
+}
+
+export async function getAllBooks(
+    query: BookQuery,
+    session?: ClientSession
 ): Promise<GetAllBooksResponse> {
 
     const {
@@ -108,12 +195,18 @@ export async function _getAllBooks(
     }
 
     const [books, total] = await Promise.all([
+
         BookModel.find(filter)
+            .session(session ?? null)
             .skip((pageNumber - 1) * limitNumber)
             .limit(limitNumber)
-            .sort({ createdAt: -1 }),
+            .sort({
+                createdAt: -1,
+            }),
 
-        BookModel.countDocuments(filter),
+        BookModel.countDocuments(filter)
+            .session(session ?? null),
+
     ]);
 
     return {
