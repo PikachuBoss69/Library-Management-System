@@ -50,46 +50,7 @@ router.delete(
     bookManagementController.deleteBook 
 );
 
-router.post(
-    "/:bookId/copies",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookValidation.createBookCopySchema),
-    bookManagementController.addBookCopies 
-);
 
-router.get(
-    "/:bookId/copies",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookValidation.getBookCopiesSchema),
-    bookManagementController.getAllBookCopies 
-);
-
-
-router.get(
-    "/:bookId/copies/:copyId",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookValidation.getBookCopySchema),
-    bookManagementController.getBookCopyDetails 
-);
-router.patch(
-    "/:bookId/copies/:copyId",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookValidation.updateBookCopySchema),
-    bookManagementController.updateBookCopy
-);
-
-
-router.delete(
-    "/:bookId/copies/:copyId",
-    authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookValidation.deleteBookCopySchema),
-    bookManagementController.deleteBookCopy 
-);
 
 
 export default router;
