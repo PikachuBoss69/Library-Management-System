@@ -2,17 +2,21 @@ import {AppError} from "../utils/AppError";
 import {BookModel} from '../models/books.model';
 import { BookCopyModel, IBookCopy } from '../models/bookCopies.model';
 import { BookCopyBody } from "@/types/bookCopy.types";
+import mongoose, { ClientSession } from "mongoose";
 
 export async function addBookCopies(
     bookId: string,
-    body: BookCopyBody
+    body: BookCopyBody,
+    session? : ClientSession
 ): Promise<IBookCopy> {
 
-    const session = await mongoose.startSession();
+    const ownSession = !session;
 
-    try {
-
+    if(!session){
+        session = await mongoose.startSession();
         session.startTransaction();
+    }
+    try {
 
         const book = await BookModel.findById(bookId).session(session);
 
@@ -40,36 +44,41 @@ export async function addBookCopies(
             },
             { session }
         );
-
-        await session.commitTransaction();
+        if(ownSession){
+            await session.commitTransaction();
+        }
 
         return bookCopy;
 
     } catch (error) {
+        if(ownSession){
 
-        await session.abortTransaction();
+            await session.abortTransaction();
+        }
 
         throw error;
 
     } finally {
-
-        session.endSession();
+        if(ownSession){
+            
+            await session.endSession();
+        }
 
     }
 }
 
-export async function getBookCopyDetails(copyId : string): Promise<IBookCopy>{
+export async function getBookCopyDetails(copyId : string, session? : ClientSession): Promise<IBookCopy>{
 
-    const copy = await BookCopyModel.findById(copyId);
+    const copy = await BookCopyModel.findById(copyId).session(session ?? null);
     if (!copy) {
         throw new AppError("Book copy not found", 404);
     }
     return copy;
 }
 
-export async function updateBookCopy(copyId : string, body : BookCopyBody): Promise<IBookCopy> {
+export async function updateBookCopy(copyId : string, body : BookCopyBody, session? : ClientSession): Promise<IBookCopy> {
 
-     const copy = await BookCopyModel.findById(copyId);
+     const copy = await BookCopyModel.findById(copyId).session(session ?? null);
     if (!copy) {
         throw new AppError("Book copy not found", 404);
     }
@@ -77,22 +86,25 @@ export async function updateBookCopy(copyId : string, body : BookCopyBody): Prom
     if (body.condition !== undefined) copy.condition = body.condition;
     if (body.price !== undefined) copy.price = body.price;
 
-    await copy.save();
+    (await copy.save({session,}));
 
     return copy;
 }
 
-import mongoose from "mongoose";
 
 export async function deleteBookCopy(
-    copyId: string
+    copyId: string,
+    session? : ClientSession 
 ): Promise<void> {
+    const ownSession = !session;
 
-    const session = await mongoose.startSession();
+    if(!session){
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+    }
 
     try {
-
-        session.startTransaction();
 
         const copy = await BookCopyModel
             .findById(copyId)
@@ -130,18 +142,24 @@ export async function deleteBookCopy(
             copyId,
             { session }
         );
+        if(ownSession){
 
-        await session.commitTransaction();
+            await session.commitTransaction();
+        }
 
     } catch (error) {
-
-        await session.abortTransaction();
+        if(ownSession){
+            await session.abortTransaction();
+            
+        }
 
         throw error;
 
     } finally {
-
-        session.endSession();
+        if(ownSession){
+            
+            await session.endSession();
+        }
 
     }
 

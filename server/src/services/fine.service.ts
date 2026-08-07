@@ -1,4 +1,4 @@
-import {HydratedDocument, Types} from "mongoose";
+import mongoose, {HydratedDocument, Types, ClientSession} from "mongoose";
 import { BorrowModel, IBorrow } from "../models/Borrow.model";
 import { BookCopyModel} from "../models/bookCopies.model";
 import { IFine, FineModel } from "../models/Fine.model";
@@ -10,84 +10,171 @@ import { FineQuery, FineFilter } from "@/types/fine.types";
 export async function createFine(
     borrowId: string,
     userId: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>> {
-    
-    const borrowRecord = await BorrowModel.findById(borrowId);
 
-    if (!borrowRecord) {
-        throw new AppError("Borrow record not found", 404);
-    }
-    const fineAmount = await calculateFine(borrowRecord);
+    const ownSession = !session;
 
-    if (fineAmount <= 0) {
-        throw new AppError("No fine applicable for this borrow record", 400);
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
     }
 
-    const fineRecord = await FineModel.create({
-        borrowId,
-        userId,
-        amount: fineAmount,
-        reason: borrowRecord.status == "lost" ? "Lost book" : "Late return",
-        status: "pending",
-    });
-    return fineRecord;
+    try {
+
+        const borrowRecord = await BorrowModel
+            .findById(borrowId)
+            .session(session);
+
+        if (!borrowRecord) {
+            throw new AppError(
+                "Borrow record not found",
+                404
+            );
+        }
+
+        const fineAmount = await calculateFine(
+            borrowRecord,
+            session
+        );
+
+        if (fineAmount <= 0) {
+            throw new AppError(
+                "No fine applicable for this borrow record",
+                400
+            );
+        }
+
+        const [fineRecord] = await FineModel.create(
+            [
+                {
+                    borrowId,
+                    userId,
+                    amount: fineAmount,
+                    reason:
+                        borrowRecord.status === "lost"
+                            ? "Lost book"
+                            : "Late return",
+                    status: "pending",
+                },
+            ],
+            {
+                session,
+            }
+        );
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return fineRecord;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
+    }
 }
 
 async function calculateFine(
-    borrow: HydratedDocument<IBorrow>
+    borrow: HydratedDocument<IBorrow>,
+    session?: ClientSession
 ): Promise<number> {
 
-    // No fine while the book is still issued
     if (borrow.status === "issued") {
         return 0;
     }
 
-    const bookCopy = await BookCopyModel.findById(borrow.copyId.toString());
+    const bookCopy = await BookCopyModel
+        .findById(borrow.copyId.toString())
+        .session(session ?? null);
 
     if (!bookCopy) {
-        throw new AppError("Book copy not found", 404);
+        throw new AppError(
+            "Book copy not found",
+            404
+        );
     }
 
-    // Lost book
     if (borrow.status === "lost") {
+
         const processingCharge = 250;
 
-        return (bookCopy.price ?? 0) + processingCharge;
+        return (
+            (bookCopy.price ?? 0) +
+            processingCharge
+        );
     }
 
-    // Returned book
     if (!borrow.returnDate) {
-        throw new AppError("Return date not found", 400);
+        throw new AppError(
+            "Return date not found",
+            400
+        );
     }
 
     const gracePeriod = 5;
     const finePerDay = 10;
 
-    const effectiveDueDate = new Date(borrow.dueDate);
-    effectiveDueDate.setDate(effectiveDueDate.getDate() + gracePeriod);
+    const effectiveDueDate = new Date(
+        borrow.dueDate
+    );
 
-    if (borrow.returnDate <= effectiveDueDate) {
+    effectiveDueDate.setDate(
+        effectiveDueDate.getDate() +
+        gracePeriod
+    );
+
+    if (
+        borrow.returnDate <=
+        effectiveDueDate
+    ) {
         return 0;
     }
 
     const overdueDays = Math.ceil(
-        (borrow.returnDate.getTime() - effectiveDueDate.getTime()) /
+        (
+            borrow.returnDate.getTime() -
+            effectiveDueDate.getTime()
+        ) /
         (1000 * 60 * 60 * 24)
     );
 
     return overdueDays * finePerDay;
 }
 
-export async function get_FineByBorrowId(borrowId: string): Promise<HydratedDocument<IFine>>{
-    const fine = await FineModel.findOne({borrowId: borrowId});
-    if(!fine){
-        throw new AppError('Fine not Found', 404);
+export async function get_FineByBorrowId(
+    borrowId: string,
+    session?: ClientSession
+): Promise<HydratedDocument<IFine>> {
+
+    const fine = await FineModel.findOne({
+        borrowId,
+    }).session(session ?? null);
+
+    if (!fine) {
+        throw new AppError(
+            "Fine not found",
+            404
+        );
     }
+
     return fine;
 }
 
 export async function get_AllPendingFines(
-    query: FineQuery
+    query: FineQuery,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>[]> {
 
     const page = query.page ?? 1;
@@ -118,13 +205,15 @@ export async function get_AllPendingFines(
     }
 
     return await FineModel.find(filter)
+        .session(session ?? null)
+        .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ createdAt: -1 });
+        .limit(limit);
 }
 
 export async function get_FineHistory(
-    query: FineQuery
+    query: FineQuery,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>[]> {
 
     const {
@@ -164,79 +253,157 @@ export async function get_FineHistory(
     }
 
     return await FineModel.find(filter)
+        .session(session ?? null)
+        .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ createdAt: -1 });
+        .limit(limit);
 }
 
 export async function fine_Waived(
     fineId: string,
     waivedBy: string,
-    remarks?: string
+    remarks?: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>> {
 
-    const fine = await FineModel.findById(fineId);
+    const ownSession = !session;
 
-    if (!fine) {
-        throw new AppError("Fine not found.", 404);
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
     }
 
-    if (fine.status !== "pending") {
-        throw new AppError(
-            `Fine has already been ${fine.status}.`,
-            400
-        );
+    try {
+
+        const fine = await FineModel.findById(fineId)
+            .session(session);
+
+        if (!fine) {
+            throw new AppError(
+                "Fine not found.",
+                404
+            );
+        }
+
+        if (fine.status !== "pending") {
+            throw new AppError(
+                `Fine has already been ${fine.status}.`,
+                400
+            );
+        }
+
+        fine.status = "waived";
+        fine.settledBy = new Types.ObjectId(waivedBy);
+        fine.waivedDate = new Date();
+
+        if (remarks?.trim()) {
+            fine.remarks = remarks.trim();
+        }
+
+        await fine.save({
+            session,
+        });
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return fine;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
     }
-
-    fine.status = "waived";
-    fine.settledBy = new Types.ObjectId(waivedBy);
-    fine.waivedDate = new Date();
-
-    if (remarks?.trim()) {
-        fine.remarks = remarks.trim();
-    }
-
-    await fine.save();
-
-    return fine;
 }
 
 export async function pay_FineByCash(
     fineId: string,
-    collectedBy: string
+    collectedBy: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>> {
 
-    const fine = await FineModel.findById(fineId);
+    const ownSession = !session;
 
-    if (!fine) {
-        throw new AppError("Fine not found.", 404);
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
     }
 
-    if (fine.status !== "pending") {
-        throw new AppError(
-            `Fine has already been ${fine.status}.`,
-            400
-        );
+    try {
+
+        const fine = await FineModel.findById(fineId)
+            .session(session);
+
+        if (!fine) {
+            throw new AppError(
+                "Fine not found.",
+                404
+            );
+        }
+
+        if (fine.status !== "pending") {
+            throw new AppError(
+                `Fine has already been ${fine.status}.`,
+                400
+            );
+        }
+
+        fine.status = "settled";
+        fine.paymentMethod = "cash";
+        fine.paidDate = new Date();
+        fine.settledBy = new Types.ObjectId(collectedBy);
+
+        await fine.save({
+            session,
+        });
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return fine;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
     }
-
-    fine.status = "settled";
-    fine.paymentMethod = "cash";
-    fine.paidDate = new Date();
-    fine.settledBy = new Types.ObjectId(collectedBy);
-
-    await fine.save();
-
-    return fine;
 }
 
 export async function pay_FineByUPI(
-    fineId: string
+    fineId: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IFine>> {
 
-    const fine = await FineModel.findById(fineId);
+    const fine = await FineModel.findById(fineId)
+        .session(session ?? null);
 
     if (!fine) {
-        throw new AppError("Fine not found.", 404);
+        throw new AppError(
+            "Fine not found.",
+            404
+        );
     }
 
     if (fine.status !== "pending") {

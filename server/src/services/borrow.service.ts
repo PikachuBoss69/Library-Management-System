@@ -1,4 +1,4 @@
-import { HydratedDocument, Types} from "mongoose";
+import mongoose, { ClientSession, HydratedDocument, Types } from "mongoose";
 import { BorrowModel, IBorrow } from "../models/Borrow.model";
 import { IUser, userModel } from "../models/users.model";
 import { IBookCopy, BookCopyModel } from "../models/bookCopies.model";
@@ -7,53 +7,106 @@ import { BookModel } from "../models/books.model";
 import { createFine } from "./fine.service";
 import { BorrowQuery, BorrowFilter } from "../types/borrow.types";
 
-
 export async function issueBook(
     userId: string,
     copyId: string,
-    issuedBy: Types.ObjectId
+    issuedBy: Types.ObjectId,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>> {
 
-    await validateUserId(userId);
-    await validateCopyId(copyId);
+    const ownSession = !session;
 
-    const issueDate = new Date();
-    const dueDate = calculateDueDate(issueDate);
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
+    }
 
-    const borrowRecord = await BorrowModel.create({
-        userId,
-        copyId,
-        issuedBy,
-        issueDate,
-        dueDate,
-        status: "issued",
-    });
+    try {
 
-    return borrowRecord;
+        await validateUserId(userId, session);
+        await validateCopyId(copyId, session);
+
+        const issueDate = new Date();
+        const dueDate = calculateDueDate(issueDate);
+
+        const [borrowRecord] = await BorrowModel.create(
+            [
+                {
+                    userId,
+                    copyId,
+                    issuedBy,
+                    issueDate,
+                    dueDate,
+                    status: "issued",
+                },
+            ],
+            {
+                session,
+            }
+        );
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return borrowRecord;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
+    }
 }
 
-export async function updateBookDetails(copyId: string, status: "issued" | "available" | "lost"): Promise<void> {
+export async function updateBookDetails(
+    copyId: string,
+    status: "issued" | "available" | "lost",
+    session?: ClientSession
+): Promise<void> {
 
-    await updateBookCopyStatus(copyId, status);
+    await updateBookCopyStatus(copyId, status, session);
 
-    const bookCopy = await findBookCopyByID(copyId);
+    const bookCopy = await findBookCopyByID(copyId, session);
 
     if (!bookCopy) {
         throw new AppError("Book copy not found", 404);
     }
 
-    await BookModel.findByIdAndUpdate(
+    const increment =
+        status === "issued" || status === "lost"
+            ? -1
+            : 1;
+
+    const book = await BookModel.findByIdAndUpdate(
         bookCopy.bookId,
         {
             $inc: {
-                availableCopies: status === "issued" || status === "lost" ? -1 : 1,
+                availableCopies: increment,
             },
+        },
+        {
+            session,
         }
     );
+
+    if (!book) {
+        throw new AppError("Book not found", 404);
+    }
 }
 
 export async function get_AllBorrowedBooks(
-    query: BorrowQuery
+    query: BorrowQuery,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>[]> {
 
     const page = query.page ?? 1;
@@ -84,124 +137,243 @@ export async function get_AllBorrowedBooks(
     }
 
     return await BorrowModel.find(filter)
+        .session(session ?? null)
         .populate("userId", "userId rollNumber")
-        .populate("copyId", "title")
-        .populate("copyId", "accessionNumber")
+        .populate("copyId", "title accessionNumber")
         .sort({ borrowDate: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
 }
 
 export async function get_OverdueBooks(
-    query: BorrowQuery
+    query: BorrowQuery,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>[]> {
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
-    const filter: BorrowFilter = {    
+    const filter: BorrowFilter = {
         status: "issued",
         dueDate: {
             $lt: new Date(),
         },
-    }
+    };
 
     if (query.userId) {
         filter.userId = query.userId;
     }
+
     if (query.copyId) {
         filter.copyId = query.copyId;
     }
+
     return await BorrowModel.find(filter)
+        .session(session ?? null)
         .populate("userId", "userId rollNumber")
-        .populate("copyId", "title")
-        .populate("copyId", "accessionNumber")
+        .populate("copyId", "title accessionNumber")
         .sort({ dueDate: 1 })
         .skip((page - 1) * limit)
         .limit(limit);
 }
 
- export async function returnIssuedBook(copyId: string,receivedBy: Types.ObjectId): Promise<HydratedDocument<IBorrow>> {
-    const borrowRecord = await BorrowModel.findOne({
-        copyId,
-        status: "issued",
-    });
-
-    if (!borrowRecord) {
-        throw new AppError("No active borrow record found for this book copy", 404);
-    }
-
-    const returnDate = new Date();
-
-    borrowRecord.returnDate = returnDate;
-    borrowRecord.receivedBy = receivedBy;
-    borrowRecord.status = "returned";
-
-    await borrowRecord.save();
-    await  createFine(borrowRecord._id.toString(), borrowRecord.userId.toString());
-
-    return borrowRecord;
- }
-
-export async function reportLostBorrow(
-    copyId: string
+ export async function returnIssuedBook(
+    copyId: string,
+    receivedBy: Types.ObjectId,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>> {
 
-    const borrowRecord = await BorrowModel.findOne({
-        copyId,
-        status: "issued",
-    });
+    const ownSession = !session;
 
-    if (!borrowRecord) {
-        throw new AppError("No active borrow record found for this book copy", 404);
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
     }
-    const lostDate = new Date();
 
-    borrowRecord.status = "lost";
-    borrowRecord.lostDate = lostDate;
-    
-    await borrowRecord.save();
+    try {
 
-    await  createFine(borrowRecord._id.toString(), borrowRecord.userId.toString());
+        const borrowRecord = await BorrowModel.findOne({
+            copyId,
+            status: "issued",
+        }).session(session);
 
-    return borrowRecord;
+        if (!borrowRecord) {
+            throw new AppError(
+                "No active borrow record found for this book copy",
+                404
+            );
+        }
+
+        borrowRecord.returnDate = new Date();
+        borrowRecord.receivedBy = receivedBy;
+        borrowRecord.status = "returned";
+
+        await borrowRecord.save({
+            session,
+        });
+
+        await createFine(
+            borrowRecord._id.toString(),
+            borrowRecord.userId.toString(),
+            session 
+        );
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return borrowRecord;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
+    }
+}
+
+export async function reportLostBorrow(
+    copyId: string,
+    session?: ClientSession
+): Promise<HydratedDocument<IBorrow>> {
+
+    const ownSession = !session;
+
+    if (!session) {
+        session = await mongoose.startSession();
+        session.startTransaction();
+    }
+
+    try {
+
+        const borrowRecord = await BorrowModel.findOne({
+            copyId,
+            status: "issued",
+        }).session(session);
+
+        if (!borrowRecord) {
+            throw new AppError(
+                "No active borrow record found for this book copy",
+                404
+            );
+        }
+
+        borrowRecord.status = "lost";
+        borrowRecord.lostDate = new Date();
+
+        await borrowRecord.save({
+            session,
+        });
+
+        await createFine(
+            borrowRecord._id.toString(),
+            borrowRecord.userId.toString(),
+            session
+        );
+
+        if (ownSession) {
+            await session.commitTransaction();
+        }
+
+        return borrowRecord;
+
+    } catch (error) {
+
+        if (ownSession) {
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+
+        if (ownSession) {
+            await session.endSession();
+        }
+
+    }
 }
 
 export async function getBorrowById(
-    borrowId: string | string[]
+    borrowId: string | string[],
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>> {
 
-    const borrowRecord = await BorrowModel.findById(borrowId);
+    const borrowRecord = await BorrowModel
+        .findById(borrowId)
+        .session(session ?? null);
 
     if (!borrowRecord) {
-        throw new AppError("Borrow record not found", 404);
+        throw new AppError(
+            "Borrow record not found",
+            404
+        );
     }
 
     return borrowRecord;
 }
 
 export async function getActiveBorrowedBooks(
-    userId: string
+    userId: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>[]> {
 
     return await BorrowModel.find({
         userId,
         status: "issued",
-    }).sort({ issueDate: -1 });
+    })
+        .session(session ?? null)
+        .sort({
+            issueDate: -1,
+        });
 }
-
 export async function getBorrowHistory(
-    userId: string
+    userId: string,
+    session?: ClientSession
 ): Promise<HydratedDocument<IBorrow>[]> {
 
     return await BorrowModel.find({
         userId,
-    }).sort({ issueDate: -1 });
+    })
+        .session(session ?? null)
+        .sort({
+            issueDate: -1,
+        });
 }
 
 
-async function updateBookCopyStatus(copyId: string, status: string): Promise<void> {
-    await BookCopyModel.findByIdAndUpdate(copyId, { status });
+async function updateBookCopyStatus(
+    copyId: string,
+    status: "issued" | "available" | "lost",
+    session?: ClientSession
+): Promise<void> {
+
+    const bookCopy = await BookCopyModel.findByIdAndUpdate(
+        copyId,
+        {
+            status,
+        },
+        {
+            session,
+            new: true,
+        }
+    );
+
+    if (!bookCopy) {
+        throw new AppError(
+            "Book copy not found",
+            404
+        );
+    }
 }
 
 function calculateDueDate(issueDate: Date): Date {
@@ -213,43 +385,79 @@ function calculateDueDate(issueDate: Date): Date {
     return dueDate;
 }
 
-async function validateUserId(userId: string): Promise<void> {
+async function validateUserId(
+    userId: string,
+    session?: ClientSession
+): Promise<void> {
 
     if (!userId) {
-        throw new AppError("User ID is required", 400);
+        throw new AppError(
+            "User ID is required",
+            400
+        );
     }
-    const user = await findUserByID(userId);
 
-    if(!user) {
-        throw new AppError("User not found", 404);
+    const user = await findUserByID(
+        userId,
+        session
+    );
+
+    if (!user) {
+        throw new AppError(
+            "User not found",
+            404
+        );
     }
 }
 
-async function validateCopyId(copyId: string): Promise<void> {
-    // TODO:
-    // 1. Check BookCopy exists
-    // 2. Check status === "available"
+async function validateCopyId(
+    copyId: string,
+    session?: ClientSession
+): Promise<void> {
 
     if (!copyId) {
-        throw new AppError("Book Copy ID is required", 400);
+        throw new AppError(
+            "Book Copy ID is required",
+            400
+        );
     }
-    const bookCopy  = await findBookCopyByID(copyId);
 
-    if(!bookCopy) {
-        throw new AppError("Book Copy not found", 404);
+    const bookCopy = await findBookCopyByID(
+        copyId,
+        session
+    );
+
+    if (!bookCopy) {
+        throw new AppError(
+            "Book Copy not found",
+            404
+        );
     }
-    //Important think why id put this ......
-     if(bookCopy.status !== "available") {
-        throw new AppError("Book Copy is not available", 400);
+
+    if (bookCopy.status !== "available") {
+        throw new AppError(
+            "Book Copy is not available",
+            400
+        );
     }
 }
 
-async function findUserByID(userId: string): Promise< HydratedDocument<IUser> | null> {
-        const user = await userModel.findById(userId)
-        return user;    
+async function findUserByID(
+    userId: string,
+    session?: ClientSession
+): Promise<HydratedDocument<IUser> | null> {
+
+    return await userModel
+        .findById(userId)
+        .session(session ?? null);
 }
 
-async function findBookCopyByID(copyId: string): Promise< HydratedDocument<IBookCopy> | null> {
-        const bookCopy = await BookCopyModel.findById(copyId)
-        return bookCopy;    
+async function findBookCopyByID(
+    copyId: string,
+    session?: ClientSession
+): Promise<HydratedDocument<IBookCopy> | null> {
+
+    return await BookCopyModel
+        .findById(copyId)
+        .session(session ?? null);
 }

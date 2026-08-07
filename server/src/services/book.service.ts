@@ -94,14 +94,19 @@ export async function updateBook(
 }
 
 export async function deleteBook(
-    bookId: string
+    bookId: string,
+    session? : ClientSession
 ): Promise<void> {
 
-    const session = await mongoose.startSession();
+    const ownSession = !session;
 
+    if(!session){
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+    }
     try {
 
-        session.startTransaction();
 
         const borrowedCopies =
             await BookCopyModel.countDocuments({
@@ -133,18 +138,23 @@ export async function deleteBook(
             { bookId },
             { session }
         );
-
-        await session.commitTransaction();
+        if(ownSession){
+            await session.commitTransaction();
+        }
 
     } catch (error) {
-
-        await session.abortTransaction();
+        if(ownSession){
+            
+            await session.abortTransaction();
+        }
 
         throw error;
 
     } finally {
-
-        session.endSession();
+        if(ownSession){
+            
+            session.endSession();
+        }
 
     }
 
