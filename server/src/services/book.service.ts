@@ -7,6 +7,7 @@ import {
     GetAllBooksResponse,
 } from "../types/book.types";
 import mongoose, { ClientSession } from "mongoose";
+import { LatestArrivalCard } from "../types/Dashboard.types";
 
 export async function createBook(
     body: BookBodyParams,
@@ -174,7 +175,8 @@ export async function getAllBooks(
 
     const pageNumber = Math.max(Number(page), 1);
     const limitNumber = Math.max(Number(limit), 1);
-
+    
+    //Here we have created Index Signature , because we don't know the exact value , it can betitle , author , isbn.
     const filter: Record<string, unknown> = {};
 
     if (category) {
@@ -225,4 +227,23 @@ export async function getAllBooks(
         page: pageNumber,
         limit: limitNumber,
     };
+}
+
+export async function getLatestArrivals(
+    session?: ClientSession
+): Promise<LatestArrivalCard[]> {
+
+    const books = await BookModel
+        .find()
+        .session(session ?? null)
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+    return books.map((book) => ({
+        bookId: book._id.toString(),
+        title: book.title,
+        author: book.author,
+        availableCopies: book.availableCopies,
+        language: book.language,
+    }));
 }

@@ -6,6 +6,7 @@ import { AppError } from "../utils/AppError";
 import { BookModel } from "../models/books.model";
 import { createFine } from "./fine.service";
 import { BorrowQuery, BorrowFilter } from "../types/borrow.types";
+import {BorrowedBookCard} from '../types/Dashboard.types';
 
 export async function issueBook(
     userId: string,
@@ -325,16 +326,39 @@ export async function getBorrowById(
 export async function getActiveBorrowedBooks(
     userId: string,
     session?: ClientSession
-): Promise<HydratedDocument<IBorrow>[]> {
+): Promise<BorrowedBookCard[]> {
 
-    return await BorrowModel.find({
-        userId,
-        status: "issued",
-    })
+    const borrows = await BorrowModel
+        .find({
+            userId,
+            status: "issued",
+        })
+        .populate({
+            path: "copyId",
+            populate: {
+                path: "bookId",
+            },
+        })
         .session(session ?? null)
         .sort({
             issueDate: -1,
         });
+
+    return borrows.map((borrow) => {
+
+        const copy = borrow.copyId as any;
+        const book = copy.bookId;
+
+        return {
+            borrowId: borrow._id.toString(),
+            copyId: copy._id.toString(),
+            accessionNumber: copy.accessionNumber,
+            title: book.title,
+            author: book.author,
+            dueDate: borrow.dueDate,
+            borrowedOn: borrow.issueDate,
+        };
+    });
 }
 export async function getBorrowHistory(
     userId: string,
@@ -460,4 +484,31 @@ async function findBookCopyByID(
     return await BookCopyModel
         .findById(copyId)
         .session(session ?? null);
+}
+
+export async function countBorrowedBooks(userId : string, session? : ClientSession): Promise<number>{
+    return BorrowModel.countDocuments({
+        userId,
+        status: "issued",
+    }).session(session ?? null);
+}
+
+export async function getReturnDeadline(
+    userId: string,
+    session?: ClientSession
+): Promise<Date | null> {
+
+    const borrow = await BorrowModel
+        .findOne({
+            userId,
+            status: "issued",
+        })
+        .sort({ dueDate: 1 })
+        .session(session ?? null);
+
+    if (!borrow) {
+        return null;
+    }
+
+    return borrow.dueDate;
 }

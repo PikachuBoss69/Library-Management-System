@@ -418,3 +418,28 @@ export async function pay_FineByUPI(
         501
     );
 }
+
+export async function getPendingFineAmount(
+    userId: string,
+    session?: ClientSession
+): Promise<number> {
+
+    const result = await FineModel.aggregate([
+        {
+            $match: {
+                userId,
+                status: "pending",
+            },
+        },
+        {
+            $group: {
+                _id: null,
+                totalAmount: {
+                    $sum: "$amount",
+                },
+            },
+        },
+    ]).session(session ?? null);
+
+    return result[0]?.totalAmount ?? 0;
+}
