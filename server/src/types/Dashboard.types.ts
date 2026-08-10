@@ -19,6 +19,14 @@ export interface LibrarianDashboardResponse {
     latestArrivals: LatestArrivalCard[];
 }
 
+export interface AdminDashboardResponse {
+
+    stats: AdminDashboardStats;
+
+    latestArrivals: LatestArrivalCard[];
+
+}
+
 export interface DashboardStats {
 
     borrowedBooksCount: number;
@@ -30,6 +38,11 @@ export interface DashboardStats {
 }
 
 export interface LibrarianDashboardStats {
+    totalBooks: number;
+
+    totalCopies: number;
+    
+    issuedCopies: number;
 
     todaysBorrows: number;
 
@@ -97,4 +110,22 @@ export interface LibrarianBorrowCard {
     dueDate: Date;
 
     borrowedOn: Date;
+}
+
+
+export interface AdminDashboardStats {
+
+    totalBooks: number;
+
+    totalCopies: number;
+
+    issuedCopies: number;
+
+    lostCopies: number;
+
+    pendingFines: number;
+
+    totalStudents: number;
+
+    totalLibrarians: number;
 }

@@ -164,3 +164,15 @@ export async function deleteBookCopy(
     }
 
 }
+
+export async function countIssuedBooks(session?: ClientSession): Promise<number> {
+    return BookCopyModel.countDocuments({
+        status : "borrowed",
+    }).session(session ?? null);  
+ }
+
+export async function countLostCopies(session?: ClientSession): Promise<number>{
+    return BookCopyModel.countDocuments({
+        status : "lost",
+    }).session(session ?? null);
+}

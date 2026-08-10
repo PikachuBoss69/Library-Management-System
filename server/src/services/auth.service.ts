@@ -7,6 +7,7 @@ import { AppError } from "../utils/AppError";
 import { StaffRegistry } from "../models/staffRegistry.model";
 import {OtpModel} from '../models/otp.model';
 import { StudentRegistry } from "../models/studentRegistry.model";
+import { ClientSession } from "mongoose";
 
 
 const secretKey = process.env["JWT_SECRET_KEY"]; 
@@ -152,4 +153,16 @@ export async function verifyLibrarianOrAdminCredentials(employeId: string) : Pro
 
 
     return ;
+}
+
+export async function countStudents(session?: ClientSession): Promise<number>{
+    return userModel.countDocuments({
+        role : "student"
+    }).session(session ?? null);   
+}
+
+export async function countLibrarians(session?: ClientSession): Promise<number>{
+    return userModel.countDocuments({
+        role : "librarian"
+    }).session(session ?? null);   
 }

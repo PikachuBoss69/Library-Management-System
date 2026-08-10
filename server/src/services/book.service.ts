@@ -247,3 +247,24 @@ export async function getLatestArrivals(
         language: book.language,
     }));
 }
+
+export async function countTotalBooks(session?: ClientSession): Promise<number> {
+    return BookModel.countDocuments().session(session ?? null);
+}
+
+export async function countTotalCopies(session?: ClientSession): Promise<number> {
+    const result = await BookModel.aggregate([
+        {
+            $group : {
+                _id : null,
+                totalBookCopies : {
+                    $sum : "$totalCopies"
+                }
+            }
+        }
+    ]).session(session ?? null);
+
+    return result[0]!.totalBookCopies ?? 0;
+ }
+
+ 
