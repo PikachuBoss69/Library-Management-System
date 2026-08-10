@@ -23,12 +23,9 @@ export async function getStudentDashboard(req : Request, res : Response, next : 
 
 export async function getLibrarianDashboard(req : Request, res : Response, next : NextFunction): Promise<void> {
     try{
-
-        const userId = req.user!._id.toString();
-        
         const dashboard =
         await dashboardService
-        .getLibrarianDashboard(userId);
+        .getLibrarianDashboard();
         
         res.status(200).json({
             status: "Success",
@@ -41,12 +38,10 @@ export async function getLibrarianDashboard(req : Request, res : Response, next 
 }
 export async function getAdminDashboard(req : Request, res : Response, next : NextFunction): Promise<void> {
     try{
-
-        const userId = req.user!._id;
         
         const dashboard =
         await dashboardService
-        .getAdminDashboard(userId);
+        .getAdminDashboard();
         
         res.status(200).json({
             status: "Success",

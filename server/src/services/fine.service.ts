@@ -443,3 +443,9 @@ export async function getPendingFineAmount(
 
     return result[0]?.totalAmount ?? 0;
 }
+
+export async function getPendingFineNumber(session? : ClientSession): Promise<number> {
+    return FineModel.countDocuments({
+        status : "pending"
+    }).session(session ?? null);
+}

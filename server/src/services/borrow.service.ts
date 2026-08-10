@@ -5,8 +5,8 @@ import { IBookCopy, BookCopyModel } from "../models/bookCopies.model";
 import { AppError } from "../utils/AppError";
 import { BookModel } from "../models/books.model";
 import { createFine } from "./fine.service";
-import { BorrowQuery, BorrowFilter } from "../types/borrow.types";
-import {BorrowedBookCard} from '../types/Dashboard.types';
+import { BorrowQuery, BorrowFilter, PopulatedBorrow, PopulatedBookCopy } from "../types/borrow.types";
+import {BorrowedBookCard, LibrarianBorrowCard} from '../types/Dashboard.types';
 
 export async function issueBook(
     userId: string,
@@ -141,7 +141,7 @@ export async function get_AllBorrowedBooks(
         .session(session ?? null)
         .populate("userId", "userId rollNumber")
         .populate("copyId", "title accessionNumber")
-        .sort({ borrowDate: -1 })
+        .sort({ issueDate: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
 }
@@ -342,11 +342,11 @@ export async function getActiveBorrowedBooks(
         .session(session ?? null)
         .sort({
             issueDate: -1,
-        });
+        }).limit(10);
 
     return borrows.map((borrow) => {
 
-        const copy = borrow.copyId as any;
+        const copy = borrow.copyId as unknown as PopulatedBookCopy;
         const book = copy.bookId;
 
         return {
@@ -511,4 +511,157 @@ export async function getReturnDeadline(
     }
 
     return borrow.dueDate;
+}
+
+export async function countTodaysBorrowedBooks(session? : ClientSession): Promise<number> {
+    const now = new Date();
+
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    //we didn't put +1 here because currently it's dealing with miliseconds so it would just add 1 in milliseconds
+    const startOfTomorrow = new Date(startOfToday);
+
+    startOfTomorrow.setDate(
+        startOfTomorrow.getDate() + 1
+    );
+
+    return BorrowModel.countDocuments({
+        status: "issued",
+
+        issueDate: {
+            $gte: startOfToday,
+            $lt: startOfTomorrow
+        },
+
+    }).session(session ?? null);
+}
+
+export async function countTodaysReturns(session? : ClientSession): Promise<number> {
+
+    const now = new Date();
+
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    //we didn't put +1 here because currently it's dealing with miliseconds so it would just add 1 in milliseconds
+    const startOfTomorrow = new Date(startOfToday);
+
+    startOfTomorrow.setDate(
+        startOfTomorrow.getDate() + 1
+    );
+
+    return BorrowModel.countDocuments({
+        status: "returned",
+
+        issueDate: {
+            $gte: startOfToday,
+            $lt: startOfTomorrow
+        },
+
+    }).session(session ?? null);
+
+}
+
+export async function countOverdueBooks(session? : ClientSession): Promise<number> {
+    return BorrowModel.countDocuments({
+        status : "issued",
+        dueDate : {
+            $lt : new Date()
+        }
+    }).session(session ?? null);
+}
+
+export async function countLostBooks(session? : ClientSession): Promise<number> {
+    return BorrowModel.countDocuments({
+        status : "lost"
+    }).session(session ?? null);
+}
+
+export async function getRecentlyBorrowedBooks(session? : ClientSession): Promise<LibrarianBorrowCard[]> {
+
+    const borrows = await BorrowModel
+        .find({
+            status: "issued",
+        }).populate("userId", "userId name rollNumber employeId")
+        .populate({
+            path: "copyId",
+            populate: {
+                path: "bookId",
+            },
+        })
+        .session(session ?? null)
+        .sort({
+            issueDate: -1,
+        })
+        .limit(10) as unknown as PopulatedBorrow[];
+
+    return borrows.map((borrow) => {
+
+        const copy = borrow.copyId;
+        const book = copy.bookId;
+        const user = borrow.userId;
+
+        return {
+            borrowId: borrow._id.toString(),
+            userId: user.userId.toString(),
+            userName: user.name,
+            rollNumber: user.rollNumber,
+            emploteId: user.employeId,
+            copyId: copy._id.toString(),
+            accessionNumber: copy.accessionNumber,
+            title: book.title,
+            author: book.author,
+            dueDate: borrow.dueDate,
+            borrowedOn: borrow.issueDate,
+        };
+    });
+}
+
+export async function getTodaysBorrowedBooks(session? : ClientSession ): Promise<LibrarianBorrowCard[]> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const startOfTomorrow = new Date(startOfToday);
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+    const borrows = await BorrowModel
+        .find({
+            issueDate: {
+                $gt : startOfToday,
+                $lt : startOfTomorrow
+            }
+        }).populate("userId", "userId name rollNumber employeId")
+        .populate({
+            path: "copyId",
+            populate: {
+                path: "bookId",
+            },
+        })
+        .session(session ?? null)
+        .sort({
+            issueDate: -1,
+        })
+        .limit(10) as unknown as PopulatedBorrow[];
+
+    return borrows.map((borrow) => {
+
+        const copy = borrow.copyId;
+        const book = copy.bookId;
+        const user = borrow.userId;
+
+        return {
+            borrowId: borrow._id.toString(),
+            userId: user.userId.toString(),
+            userName: user.name,
+            rollNumber: user.rollNumber,
+            emploteId: user.employeId,
+            copyId: copy._id.toString(),
+            accessionNumber: copy.accessionNumber,
+            title: book.title,
+            author: book.author,
+            dueDate: borrow.dueDate,
+            borrowedOn: borrow.issueDate,
+        };
+    });
 }

@@ -42,6 +42,51 @@ export async function getStudentDashboard(
     };
 }
 
-export async function getLibrarianDashboard(userId : string): Promise<LibrarianDashboardResponse>{
-    
+export async function getLibrarianDashboard(): Promise<LibrarianDashboardResponse>{
+    const [
+        todaysBorrows,
+        todaysReturns,
+        overdueBooks,
+        pendingFines,
+        lostBooks,
+        recentlyBorrowed,
+        todaysBorrowed,
+        latestArrivals,
+    ] = await Promise.all([
+
+        borrowService.countTodaysBorrowedBooks(),
+
+        borrowService.countTodaysReturns(),
+
+        borrowService.countOverdueBooks(),
+
+        fineService.getPendingFineNumber(),
+
+        borrowService.countLostBooks(),
+
+        borrowService.getRecentlyBorrowedBooks(),
+
+        borrowService.getTodaysBorrowedBooks(),
+
+        bookService.getLatestArrivals(),
+
+    ]);
+
+    return {
+
+        stats: {
+            todaysBorrows,
+            todaysReturns,
+            overdueBooks,
+            pendingFines,
+            lostBooks,
+        },
+
+        todaysBorrowed,
+
+        recentlyBorrowed,
+
+        latestArrivals,
+
+    };
 }

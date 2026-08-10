@@ -1,4 +1,5 @@
-
+import { IBorrow } from "@/models/Borrow.model";
+import { HydratedDocument, Types } from "mongoose";
 
 export interface BorrowQuery {
     page?: number;
@@ -22,3 +23,27 @@ export interface BorrowFilter {
         $lte?: Date;
     };
 }
+
+export interface PopulatedUser {
+    userId: string;
+    name: string;
+    rollNumber? : string;
+    employeId? : string;
+}
+
+export interface PopulatedBook {
+    _id: Types.ObjectId;
+    title: string;
+    author: string;
+}
+
+export interface PopulatedBookCopy {
+    _id: Types.ObjectId;
+    accessionNumber: string;
+    bookId: PopulatedBook;
+}
+
+export type PopulatedBorrow = Omit<HydratedDocument<IBorrow>, "copyId" | "userId"> & {
+    copyId: PopulatedBookCopy;
+    userId: PopulatedUser;
+};

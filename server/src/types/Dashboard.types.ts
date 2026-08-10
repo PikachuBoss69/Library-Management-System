@@ -10,6 +10,13 @@ export interface StudentDashboardResponse {
 
 export interface LibrarianDashboardResponse {
 
+    stats: LibrarianDashboardStats;
+
+    todaysBorrowed: LibrarianBorrowCard[];
+
+    recentlyBorrowed: LibrarianBorrowCard[];
+
+    latestArrivals: LatestArrivalCard[];
 }
 
 export interface DashboardStats {
@@ -20,6 +27,19 @@ export interface DashboardStats {
 
     returnDeadline: Date | null;
 
+}
+
+export interface LibrarianDashboardStats {
+
+    todaysBorrows: number;
+
+    todaysReturns: number;
+
+    overdueBooks: number;
+
+    pendingFines: number;
+
+    lostBooks: number;
 }
 
 export interface BorrowedBookCard {
@@ -52,4 +72,29 @@ export interface LatestArrivalCard {
 
     language:string;
 
+}
+
+export interface LibrarianBorrowCard {
+
+    borrowId: string;
+
+    userId: string;
+
+    userName: string;
+
+    rollNumber? : string;
+
+    employeId? : string;
+
+    copyId: string;
+
+    accessionNumber: string;
+
+    title: string;
+
+    author: string;
+
+    dueDate: Date;
+
+    borrowedOn: Date;
 }
