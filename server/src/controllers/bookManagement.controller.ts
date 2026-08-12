@@ -7,7 +7,7 @@ import {BookParams} from '../types/book.types';
 export async function addNewBook(req: Request, res: Response): Promise<void>{
     try{
         const body = res.locals.validated.body;
-    
+       
         const book = await bookService.createBook(body);
         
      

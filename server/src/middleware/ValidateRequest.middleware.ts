@@ -5,16 +5,18 @@ import { AppError } from "../utils/AppError";
 export const validate = <T extends z.ZodTypeAny>(schema: T): RequestHandler => {
     return (req: Request, res: Response, next: NextFunction) => {
 
+     
         const result = schema.safeParse({
         body: req.body,
         params: req.params,
         query: req.query,
         });
-
+        console.log(req.body);
         if (!result.success) {
             throw new AppError(result.error.issues[0]!.message, 400);
+            // validation failed
         }
-
+  
         const data = result.data as z.infer<T> & { 
             body?: unknown; 
             params?: unknown; 

@@ -1,8 +1,53 @@
 import {AppError} from "../utils/AppError";
 import {BookModel} from '../models/books.model';
 import { BookCopyModel, IBookCopy } from '../models/bookCopies.model';
-import { BookCopyBody } from "@/types/bookCopy.types";
+import { BookCopyBody, PopulatedBookCopy } from "@/types/bookCopy.types";
 import mongoose, { ClientSession } from "mongoose";
+
+export async function addBulkCopies(body: BookCopyBody[], session? : ClientSession): Promise<PopulatedBookCopy[]>{
+    
+    const ownSession = !session;
+
+    if(!session){
+        session = await mongoose.startSession();
+        session.startTransaction();
+    }
+    try{
+        const copies = await BookCopyModel.insertMany(
+            body,
+            { session }
+        );
+
+        const populatedCopies = await BookCopyModel
+            .find({
+                _id: { $in: copies.map(copy => copy._id) }
+        })
+        .populate("bookId", "title")
+        .session(session);
+
+        if(ownSession){
+            await session.commitTransaction();
+        }
+
+        return populatedCopies as unknown as PopulatedBookCopy[];
+
+    }catch(error){
+        if(ownSession){
+
+            await session.abortTransaction();
+        }
+
+        throw error;
+
+    } finally {
+        if(ownSession){
+            
+            await session.endSession();
+        }
+
+    }
+    
+}
 
 export async function addBookCopies(
     bookId: string,

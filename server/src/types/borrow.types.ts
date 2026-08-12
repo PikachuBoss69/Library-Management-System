@@ -1,5 +1,6 @@
 import { IBorrow } from "@/models/Borrow.model";
 import { HydratedDocument, Types } from "mongoose";
+import { PopulatedBookCopy } from "./bookCopy.types";
 
 export interface BorrowQuery {
     page?: number;
@@ -29,18 +30,6 @@ export interface PopulatedUser {
     name: string;
     rollNumber? : string;
     employeId? : string;
-}
-
-export interface PopulatedBook {
-    _id: Types.ObjectId;
-    title: string;
-    author: string;
-}
-
-export interface PopulatedBookCopy {
-    _id: Types.ObjectId;
-    accessionNumber: string;
-    bookId: PopulatedBook;
 }
 
 export type PopulatedBorrow = Omit<HydratedDocument<IBorrow>, "copyId" | "userId"> & {

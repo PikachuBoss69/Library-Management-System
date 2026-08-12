@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as fineService from "../services/fine.service";
-import { AppError } from "@/utils/AppError";
+import { AppError } from "../utils/AppError";
 
 export async function getFineByBorrowId(
     req: Request,

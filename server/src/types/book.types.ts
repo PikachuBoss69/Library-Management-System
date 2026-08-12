@@ -1,5 +1,5 @@
 import { IBook } from "../models/books.model";
-
+import { Types} from "mongoose"
 export type BookParams = {
     bookId: string;
 }
@@ -27,4 +27,10 @@ export interface BookBodyParams {
     language? : string;
     description? : string;
     totalCopies? : number;
+}
+
+export interface PopulatedBook {
+    _id: Types.ObjectId;
+    title: string;
+    author: string;
 }

@@ -34,7 +34,7 @@ export interface IUserMethods {
 
 
 
-export type IUserDocument = HydratedDocument<IUser,IUserModel, IUserMethods>;
+export type IUserDocument = HydratedDocument<IUser, IUserMethods>;
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>({
     userId : {

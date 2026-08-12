@@ -14,6 +14,7 @@ export async function createBook(
     session?: ClientSession
 ): Promise<IBook> {
     try {
+     
         const [book] = await BookModel.create(
             [
                 {
@@ -24,7 +25,7 @@ export async function createBook(
             ],
             { session }
         );
-
+       
         return book;
     } catch (error: any) {
         if (error.code === 11000) {

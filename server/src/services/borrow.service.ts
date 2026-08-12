@@ -5,7 +5,8 @@ import { IBookCopy, BookCopyModel } from "../models/bookCopies.model";
 import { AppError } from "../utils/AppError";
 import { BookModel } from "../models/books.model";
 import { createFine } from "./fine.service";
-import { BorrowQuery, BorrowFilter, PopulatedBorrow, PopulatedBookCopy } from "../types/borrow.types";
+import { BorrowQuery, BorrowFilter, PopulatedBorrow} from "../types/borrow.types";
+import { PopulatedBookCopy } from "../types/bookCopy.types";
 import {BorrowedBookCard, LibrarianBorrowCard} from '../types/Dashboard.types';
 
 export async function issueBook(

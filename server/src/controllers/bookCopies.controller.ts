@@ -3,6 +3,42 @@ import {AppError} from "../utils/AppError";
 import * as bookCopyService from '../services/bookCopy.service';
 import {BookCopyParams} from '../types/bookCopy.types';
 
+
+export async function addBulkCopies(req: Request, res: Response): Promise<void>{
+    try{
+
+        const body = res.locals.validated.body;
+        
+        const result = await bookCopyService.addBulkCopies(body);
+        
+        const data = result.map((copy) => {
+
+            const book = copy.bookId;
+
+            return {
+                copyId: copy._id,
+                bookId: book._id,
+                title: book.title,
+                accessionNumber: copy.accessionNumber,
+            };
+        });
+
+        res.status(200).json({
+        status : "success",
+        message : "Book copies Added Successgully",
+        data 
+    })
+    }catch(error){
+        if(error instanceof AppError){
+            throw error;
+        }
+        throw new AppError(
+            "Internal Server Error",
+            500
+        );
+    }
+}
+
 export async function addBookCopies(req: Request<BookCopyParams>, res: Response): Promise<void>{
     try{
         const { bookId } = res.locals.validated.params;

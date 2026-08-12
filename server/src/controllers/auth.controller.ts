@@ -67,8 +67,6 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
 
         const token = await generateToken(user);
 
-        console.log("Generated token for user:"); // Log the generated token
-
         res.cookie("token", token)
 
         res.status(200).json({
