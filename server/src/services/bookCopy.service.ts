@@ -1,7 +1,7 @@
 import {AppError} from "../utils/AppError";
 import {BookModel} from '../models/books.model';
 import { BookCopyModel, IBookCopy } from '../models/bookCopies.model';
-import { BookCopyBody, PopulatedBookCopy } from "@/types/bookCopy.types";
+import { BookCopyBody, PopulatedBookCopy} from "../types/bookCopy.types";
 import mongoose, { ClientSession } from "mongoose";
 
 export async function addBulkCopies(body: BookCopyBody[], session? : ClientSession): Promise<PopulatedBookCopy[]>{
@@ -50,7 +50,6 @@ export async function addBulkCopies(body: BookCopyBody[], session? : ClientSessi
 }
 
 export async function addBookCopies(
-    bookId: string,
     body: BookCopyBody,
     session? : ClientSession
 ): Promise<IBookCopy> {
@@ -63,24 +62,18 @@ export async function addBookCopies(
     }
     try {
 
-        const book = await BookModel.findById(bookId).session(session);
-
-        if (!book) {
-            throw new AppError("Book not found", 404);
-        }
-
         const [bookCopy] = await BookCopyModel.create(
             [
                 {
-                    bookId,
                     ...body,
+                    status: "available",
                 },
             ],
             { session }
         );
 
         await BookModel.findByIdAndUpdate(
-            bookId,
+            bookCopy.bookId,
             {
                 $inc: {
                     totalCopies: 1,

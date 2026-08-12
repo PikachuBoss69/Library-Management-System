@@ -1,22 +1,31 @@
 import { z } from "zod";
 
-export const createBookCopySchema = z.object({
-    params: z.object({
-        bookId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Book ID"),
-    }),
-
+export const bookCopySchema = z.object({
     body: z.object({
-        accessionNumber: z.string().trim().min(1),
+        bookId: z.string().regex(
+        /^[0-9a-fA-F]{24}$/,
+        "Invalid book ID"
+        ),
 
-        // No status field.
-        // Every newly created copy is "available" by default in the model.
+        accessionNumber: z.string()
+            .min(1, "Accession number is required")
+            .trim(),
+
         condition: z.enum(["new", "good", "damaged"]),
 
         purchaseDate: z.coerce.date(),
 
-        price: z.number().nonnegative().optional(),
+        price: z.coerce.number()
+            .nonnegative("Price cannot be negative").optional(),
     }),
 });
+
+
+export const addBulkCopiesSchema = z.object({
+    body: z.array(bookCopySchema)
+        .min(1, "At least one book copy is required"),
+});
+
 
 export const getBookCopiesSchema = z.object({
     params: z.object({

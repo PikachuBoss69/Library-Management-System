@@ -10,12 +10,20 @@ import {validate} from "../middleware/ValidateRequest.middleware";
 
 const router = express.Router();
 
-
 router.post(
-    "/:bookId/copies",
+    "/bulk/copies",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(bookCopyValidation.createBookCopySchema),
+    validate(bookCopyValidation.addBulkCopiesSchema),
+    bookCopyController.addBulkCopies 
+);
+
+
+router.post(
+    "/copies",
+    authMiddleware,
+    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
+    validate(bookCopyValidation.bookCopySchema),
     bookCopyController.addBookCopies 
 );
 

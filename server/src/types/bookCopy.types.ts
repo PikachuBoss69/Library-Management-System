@@ -8,10 +8,10 @@ export type BookCopyParams = {
 }
 
 export interface BookCopyBody {
-    accessionNumber? : string; 
-    status? : "available" | "borrowed" | "reserved" | "lost"; 
-    condition? :  "new" | "good" | "damaged";
-    purchaseDate? : Date; 
+    bookId : string;
+    accessionNumber : string; 
+    condition :  "new" | "good" | "damaged";
+    purchaseDate : Date; 
     price? : number;
 }
 
@@ -19,5 +19,4 @@ export interface PopulatedBookCopy extends Omit<IBookCopy, "bookId">{
     _id: Types.ObjectId;
     accessionNumber: string;
     bookId: PopulatedBook;
-    title? : string;
 }

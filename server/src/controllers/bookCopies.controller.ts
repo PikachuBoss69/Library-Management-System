@@ -25,7 +25,7 @@ export async function addBulkCopies(req: Request, res: Response): Promise<void>{
 
         res.status(200).json({
         status : "success",
-        message : "Book copies Added Successgully",
+        message : "Book copies Added Successfully",
         data 
     })
     }catch(error){
@@ -41,10 +41,9 @@ export async function addBulkCopies(req: Request, res: Response): Promise<void>{
 
 export async function addBookCopies(req: Request<BookCopyParams>, res: Response): Promise<void>{
     try{
-        const { bookId } = res.locals.validated.params;
         const body = res.locals.validated.body;
 
-        const result = await bookCopyService.addBookCopies(bookId, body);
+        const result = await bookCopyService.addBookCopies(body);
 
         res.status(200).json({
             message : "",
