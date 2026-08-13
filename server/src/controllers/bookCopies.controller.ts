@@ -42,9 +42,8 @@ export async function addBulkCopies(req: Request, res: Response): Promise<void>{
 export async function addBookCopies(req: Request<BookCopyParams>, res: Response): Promise<void>{
     try{
         const body = res.locals.validated.body;
-
         const result = await bookCopyService.addBookCopies(body);
-
+        console.log("..............................2");
         res.status(200).json({
             message : "",
             bookCopy : {
@@ -89,7 +88,8 @@ export async function getBookCopyDetails(req: Request<BookCopyParams>, res: Resp
 export async function updateBookCopy(req: Request<BookCopyParams>, res: Response, next: NextFunction): Promise<void> {
     try {
         const { copyId } = res.locals.validated.params;
-       const result = await bookCopyService.updateBookCopy(copyId, req.body);
+        const body = res.locals.validated.body;
+       const result = await bookCopyService.updateBookCopy(copyId, body);
 
         res.status(200).json({
             success: true,

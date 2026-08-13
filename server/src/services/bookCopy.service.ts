@@ -61,17 +61,17 @@ export async function addBookCopies(
         session.startTransaction();
     }
     try {
-
         const [bookCopy] = await BookCopyModel.create(
             [
                 {
-                    ...body,
-                    status: "available",
+                    ...body
                 },
             ],
             { session }
         );
-
+        if(!bookCopy){
+            throw new AppError("BookCopy not formed", 401);
+        }
         await BookModel.findByIdAndUpdate(
             bookCopy.bookId,
             {
@@ -82,13 +82,14 @@ export async function addBookCopies(
             },
             { session }
         );
+        
         if(ownSession){
             await session.commitTransaction();
         }
-
         return bookCopy;
 
     } catch (error) {
+        console.log(error);
         if(ownSession){
 
             await session.abortTransaction();

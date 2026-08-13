@@ -14,7 +14,7 @@ export const validate = <T extends z.ZodTypeAny>(schema: T): RequestHandler => {
         });
         console.log(result.success);
         if (!result.success) {
-            console.log(error);
+            console.error(error);
             throw new AppError(result.error.issues[0]!.message, 400);
             // validation failed
         }

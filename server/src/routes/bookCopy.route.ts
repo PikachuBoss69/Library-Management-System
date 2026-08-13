@@ -28,14 +28,14 @@ router.post(
 );
 
 router.get(
-    "/:bookId/copies/:copyId",
+    "/copies/details/:copyId",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(bookCopyValidation.getBookCopySchema),
     bookCopyController.getBookCopyDetails 
 );
 router.patch(
-    "/:bookId/copies/:copyId",
+    "/copies/update/:copyId",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(bookCopyValidation.updateBookCopySchema),
@@ -44,7 +44,7 @@ router.patch(
 
 
 router.delete(
-    "/:bookId/copies/:copyId",
+    "/copies/delete/:copyId",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(bookCopyValidation.deleteBookCopySchema),

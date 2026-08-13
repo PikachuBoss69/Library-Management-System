@@ -35,15 +35,12 @@ export const getBookCopiesSchema = z.object({
 
 export const getBookCopySchema = z.object({
     params: z.object({
-        bookId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Book ID"),
-
         copyId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Copy ID"),
     }),
 });
 
 export const updateBookCopySchema = z.object({
     params: z.object({
-        bookId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Book ID"),
 
         copyId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Copy ID"),
     }),
@@ -53,14 +50,12 @@ export const updateBookCopySchema = z.object({
         // Borrow/Return/Lost should have dedicated endpoints.
         condition: z.enum(["new", "good", "damaged"]).optional(),
 
-        price: z.number().nonnegative().optional(),
+        price: z.coerce.number().nonnegative().optional(),
     }),
 });
 
 export const deleteBookCopySchema = z.object({
     params: z.object({
-        bookId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Book ID"),
-
         copyId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Copy ID"),
     }),
 });
