@@ -16,8 +16,6 @@ export async function borrowBook(
 
         const borrowRecord = await issueBook(userId, copyId, issuedBy);
 
-        await updateBookDetails(copyId, "issued");
-
         res.status(201).json({
             success: true,
             message: "Book issued successfully",

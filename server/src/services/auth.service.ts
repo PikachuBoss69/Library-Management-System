@@ -147,7 +147,6 @@ export async function verifyLibrarianOrAdminCredentials(employeId: string) : Pro
         emailOtp,
         phoneOtp
     });
-
     await sendEmailOtp(employe.email, emailOtp);
     await sendPhoneOtp(employe.phoneNumber, phoneOtp);
 

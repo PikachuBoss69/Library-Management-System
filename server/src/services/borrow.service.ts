@@ -46,6 +46,7 @@ export async function issueBook(
                 session,
             }
         );
+        await updateBookDetails(copyId, "issued", session);
 
         if (ownSession) {
             await session.commitTransaction();

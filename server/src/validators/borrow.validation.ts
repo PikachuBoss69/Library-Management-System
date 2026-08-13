@@ -12,7 +12,7 @@ export const paginationSchema = z.object({
 
 export const borrowBookSchema = z.object({
     body: z.object({
-        studentId: objectId,
+        userId: objectId,
 
         copyId: objectId,
     }),

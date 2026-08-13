@@ -13,7 +13,7 @@ import { Roles } from "../constants/roles";
 const router = express.Router();
 
 router.post(
-    "/borrow",
+    "/borrowBook",
     authMiddleware,
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(borrowValidation.borrowBookSchema),
