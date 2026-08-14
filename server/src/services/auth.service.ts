@@ -28,9 +28,7 @@ export async function createUser( rollNumber: string, password: string ) : Promi
     user.userId = `STU${rollNumber}`; 
     
     await user.save();
-    
-    //TODO#2:
-    //Mongoose 9 document typing mismatch affecting all model return types.
+  
     return user;
 }
 
