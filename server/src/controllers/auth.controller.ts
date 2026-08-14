@@ -145,38 +145,30 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     //Otp is deleted after verification to prevent reuse and ensure security
     await OtpModel.deleteOne({ rollNumber });
 
-    res.status(200).json({
-        status: "Success",
-        message: "OTP verified successfully",
-        isVerified: true,   
-    });
-
     //Create a random password for the user, which will be changed later on first login by the user
     let password = await generatePassword();
-    
+
     //Create a new User in the database with the provided roll number, password, and role
     const user = await createUser( rollNumber, password);
-    
 
     const userEmail= await StudentRegistry.findOne({rollNumber});
-    
+  
     if(!userEmail) {
         throw new AppError("Student Email not found", 404);
     }
 
     //Temprory password sending via mail
-    await sendPasswordEmail(user.userId, userEmail.collegeEmail, password);
+    // await sendPasswordEmail(user.userId, userEmail.collegeEmail, password);
 
-
+  
     const token = await generateToken(user);
-
 
     res.cookie("token", token, {
     httpOnly: true,
     secure: false, // Set to true if using HTTPS
     sameSite: "strict",
     });
-
+  
     
     res.status(201).json({
         message:"User Created Successfully",
@@ -195,6 +187,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     return;
 
     }catch(error){
+        console.log(error);
         if (error instanceof AppError) {
         throw error;
         }
@@ -223,7 +216,7 @@ export async function changePassword(req: Request, res: Response): Promise<void>
         if(!user){
             throw new AppError("user not found",404)
         }
-
+       
         await changepassword(user, newPassword);
 
         res.status(200).json({
@@ -250,7 +243,7 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 export async function registerUserLibrarianOrAdmin(req: Request, res: Response) : Promise<void> {
     try{
 
-    const {employeId} = req.body;
+    const {employeId} = res.locals.validated.body;
         
     //Checks whether the provided roll number already exists in the database or not
     const isExistingUser = await userModel.findOne({employeId});
