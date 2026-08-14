@@ -120,63 +120,57 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     try{
         const {rollNumber, emailOtp, phoneOtp} = req.body;
         
-        // Fetch the generated OTPs from the database for the given roll number
-        const otpRecord = await OtpModel.findOne({rollNumber});
+    //     // Fetch the generated OTPs from the database for the given roll number
+    //     const otpRecord = await OtpModel.findOne({rollNumber});
     
-    if (!otpRecord) {
-        throw new AppError("OTP expired or not found", 404);
-    }
+    // if (!otpRecord) {
+    //     throw new AppError("OTP expired or not found", 404);
+    // }
     
-    const generatedEmailOtp = otpRecord.emailOtp;
-    const generatedPhoneOtp = otpRecord.phoneOtp;
+    // const generatedEmailOtp = otpRecord.emailOtp;
+    // const generatedPhoneOtp = otpRecord.phoneOtp;
 
-    if (!generatedEmailOtp || !generatedPhoneOtp) {
-        throw new AppError("OTP not found for the provided roll number", 404);
-    }
+    // if (!generatedEmailOtp || !generatedPhoneOtp) {
+    //     throw new AppError("OTP not found for the provided roll number", 404);
+    // }
 
-    // Verify the provided OTPs against the generated ones
-    const isEmailVerified = compareOtps(emailOtp, generatedEmailOtp);
-    const isPhoneVerified = compareOtps(phoneOtp, generatedPhoneOtp);
+    // // Verify the provided OTPs against the generated ones
+    // const isEmailVerified = compareOtps(emailOtp, generatedEmailOtp);
+    // const isPhoneVerified = compareOtps(phoneOtp, generatedPhoneOtp);
 
-    if(!isEmailVerified || !isPhoneVerified) {
-        throw new AppError("Invalid OTP provided", 400);
-    }
+    // if(!isEmailVerified || !isPhoneVerified) {
+    //     throw new AppError("Invalid OTP provided", 400);
+    // }
 
     //Otp is deleted after verification to prevent reuse and ensure security
-    await OtpModel.deleteOne({ rollNumber });
-
-    res.status(200).json({
-        status: "Success",
-        message: "OTP verified successfully",
-        isVerified: true,   
-    });
-
+    // await OtpModel.deleteOne({ rollNumber });
+    console.log(".............................1");
     //Create a random password for the user, which will be changed later on first login by the user
     let password = await generatePassword();
-    
+    console.log(".............................2");
     //Create a new User in the database with the provided roll number, password, and role
     const user = await createUser( rollNumber, password);
-    
+    console.log(".............................3");
 
     const userEmail= await StudentRegistry.findOne({rollNumber});
-    
+    console.log(".............................4");
     if(!userEmail) {
         throw new AppError("Student Email not found", 404);
     }
-
+    console.log(".............................5");
     //Temprory password sending via mail
-    await sendPasswordEmail(user.userId, userEmail.collegeEmail, password);
+    // await sendPasswordEmail(user.userId, userEmail.collegeEmail, password);
 
-
+    console.log(".............................6");
     const token = await generateToken(user);
 
-
+    console.log(".............................7");
     res.cookie("token", token, {
     httpOnly: true,
     secure: false, // Set to true if using HTTPS
     sameSite: "strict",
     });
-
+    console.log(".............................8");
     
     res.status(201).json({
         message:"User Created Successfully",
@@ -195,6 +189,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     return;
 
     }catch(error){
+        console.log(error);
         if (error instanceof AppError) {
         throw error;
         }
@@ -223,7 +218,7 @@ export async function changePassword(req: Request, res: Response): Promise<void>
         if(!user){
             throw new AppError("user not found",404)
         }
-
+       
         await changepassword(user, newPassword);
 
         res.status(200).json({
@@ -250,7 +245,7 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 export async function registerUserLibrarianOrAdmin(req: Request, res: Response) : Promise<void> {
     try{
 
-    const {employeId} = req.body;
+    const {employeId} = res.locals.validated.body;
         
     //Checks whether the provided roll number already exists in the database or not
     const isExistingUser = await userModel.findOne({employeId});

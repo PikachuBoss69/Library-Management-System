@@ -22,15 +22,12 @@ export async function generatePassword() : Promise<string> {
 }
 
 export async function createUser( rollNumber: string, password: string ) : Promise<IUserDocument> {
-    const user = await userModel.create({ rollNumber, password});
-
+    const userId = `STU${rollNumber}`; 
+    
+    const user = await userModel.create({ userId, rollNumber, password});
+    console.log("........................9");
    
-    user.userId = `STU${rollNumber}`; 
     
-    await user.save();
-    
-    //TODO#2:
-    //Mongoose 9 document typing mismatch affecting all model return types.
     return user;
 }
 
@@ -47,8 +44,6 @@ export async function createNewUser( employeId: string, password: string, role: 
 
     await user.save();
     
-    //TODO#2:
-    //Mongoose 9 document typing mismatch affecting all model return types.
     return user;
 }
 
@@ -124,8 +119,8 @@ export async function verifyCredentials(rollNumber: string) : Promise<void>  {
         phoneOtp
     });
 
-    await sendEmailOtp(student.collegeEmail, emailOtp);
-    await sendPhoneOtp(student.phoneNumber, phoneOtp);
+    // await sendEmailOtp(student.collegeEmail, emailOtp);
+    // await sendPhoneOtp(student.phoneNumber, phoneOtp);
 
 
     return ;
@@ -147,8 +142,8 @@ export async function verifyLibrarianOrAdminCredentials(employeId: string) : Pro
         emailOtp,
         phoneOtp
     });
-    await sendEmailOtp(employe.email, emailOtp);
-    await sendPhoneOtp(employe.phoneNumber, phoneOtp);
+    // await sendEmailOtp(employe.email, emailOtp);
+    // await sendPhoneOtp(employe.phoneNumber, phoneOtp);
 
 
     return ;

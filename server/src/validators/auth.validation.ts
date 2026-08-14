@@ -3,20 +3,20 @@ import { z } from "zod";
 
 export const registerUserSchema = z.object({
     body: z.object({
-        rollNumber: z.string().trim().min(1),
+        rollNumber: z.coerce.string().trim().min(1),
     }),
 });
 
 export const verifyOtpSchema = z.object({
     body: z.object({
-        rollNumber: z.string().trim().min(1),
+        rollNumber: z.coerce.string().trim().min(1),
 
-        emailOtp: z
+        emailOtp: z.coerce
             .string()
             .trim()
             .length(6, "Email OTP must be 6 digits"),
 
-        phoneOtp: z
+        phoneOtp: z.coerce
             .string()
             .trim()
             .length(6, "Phone OTP must be 6 digits"),
@@ -59,7 +59,7 @@ export const changePasswordSchema = z.object({
 
 export const registerStaffSchema = z.object({
     body: z.object({
-        employeeId: z.string().trim().min(1),
+        employeeId: z.coerce.string().trim().min(1),
     }),
 });
 
