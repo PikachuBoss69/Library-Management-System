@@ -25,7 +25,7 @@ export async function createUser( rollNumber: string, password: string ) : Promi
     const userId = `STU${rollNumber}`; 
     
     const user = await userModel.create({ userId, rollNumber, password});
-    console.log("........................9");
+ 
    
     
     return user;
@@ -142,6 +142,7 @@ export async function verifyLibrarianOrAdminCredentials(employeId: string) : Pro
         emailOtp,
         phoneOtp
     });
+
     // await sendEmailOtp(employe.email, emailOtp);
     // await sendPhoneOtp(employe.phoneNumber, phoneOtp);
 
