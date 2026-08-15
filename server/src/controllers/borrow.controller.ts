@@ -44,6 +44,7 @@ export async function returnBook(
             data: borrowRecord,
         });
     } catch (error) {
+        console.log(error);
         next(new AppError("Failed to return book", 500));
     }
 }

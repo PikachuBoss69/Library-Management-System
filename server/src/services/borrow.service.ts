@@ -26,10 +26,12 @@ export async function issueBook(
     try {
 
         await validateUserId(userId, session);
+        console.log("....................1");
         await validateCopyId(copyId, session);
 
         const issueDate = new Date();
         const dueDate = calculateDueDate(issueDate);
+
 
         const [borrowRecord] = await BorrowModel.create(
             [
@@ -415,18 +417,18 @@ async function validateUserId(
     userId: string,
     session?: ClientSession
 ): Promise<void> {
-
     if (!userId) {
         throw new AppError(
             "User ID is required",
             400
         );
     }
-
+    
     const user = await findUserByID(
         userId,
         session
     );
+
 
     if (!user) {
         throw new AppError(
@@ -472,10 +474,9 @@ async function findUserByID(
     userId: string,
     session?: ClientSession
 ): Promise<HydratedDocument<IUser> | null> {
-
-    return await userModel
-        .findById(userId)
-        .session(session ?? null);
+    return await userModel.findOne({
+    userId: userId
+    }).session(session ?? null);
 }
 
 async function findBookCopyByID(

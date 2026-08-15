@@ -65,6 +65,7 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
             throw new AppError("Invalid password", 401);
         }
 
+
         const token = await generateToken(user);
 
         res.cookie("token", token)
@@ -119,7 +120,7 @@ export async function logoutUser(req: Request, res: Response): Promise<void> {
 export async function verifyOtp(req: Request, res: Response): Promise<void> {
     try{
         const {rollNumber, emailOtp, phoneOtp} = req.body;
-        
+
         // Fetch the generated OTPs from the database for the given roll number
         const otpRecord = await OtpModel.findOne({rollNumber});
     
@@ -142,7 +143,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
         throw new AppError("Invalid OTP provided", 400);
     }
 
-    //Otp is deleted after verification to prevent reuse and ensure security
+    // Otp is deleted after verification to prevent reuse and ensure security
     await OtpModel.deleteOne({ rollNumber });
 
     //Create a random password for the user, which will be changed later on first login by the user
@@ -202,7 +203,7 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
 
 export async function changePassword(req: Request, res: Response): Promise<void> {
     try{
-        const { newPassword, retypePassword } = req.body;
+        const {newPassword, retypePassword } = req.body;
 
         if(!newPassword || !retypePassword) {
             throw new AppError("Password Not found", 404);
@@ -212,13 +213,22 @@ export async function changePassword(req: Request, res: Response): Promise<void>
             throw new AppError("Passwords do not match", 400);
         }
 
-        const user = req.user;
+        if(!newPassword || !retypePassword) {
+            throw new AppError("Password Not found", 404);
+        }
+
+        if(newPassword !== retypePassword) {    
+            throw new AppError("Passwords do not match", 400);
+        }
+        const userId = req.user?._id;
+        const user = await userModel.findById(userId)
+                    .select("+password");
         if(!user){
             throw new AppError("user not found",404)
         }
-       
+        
         await changepassword(user, newPassword);
-
+       
         res.status(200).json({
             message : "New password created successfully",
             status : "Success",
@@ -231,14 +241,13 @@ export async function changePassword(req: Request, res: Response): Promise<void>
         throw error;
         }
 
-        throw new AppError(
-            "Internal Server Error",
-            500
-        );
+        throw error;
 
     }
 
 }
+
+
 
 export async function registerUserLibrarianOrAdmin(req: Request, res: Response) : Promise<void> {
     try{
@@ -275,8 +284,8 @@ export async function registerUserLibrarianOrAdmin(req: Request, res: Response) 
 export async function verifylibrarianOrAdminOtp(req: Request, res: Response): Promise<void> {
     try{
         const {employeId, role, emailOtp, phoneOtp} = req.body;
-        
-        // Fetch the generated OTPs from the database for the given roll number
+    
+        //Fetch the generated OTPs from the database for the given roll number
         const otpRecord = await OtpModel.findOne({employeId});
     
     if (!otpRecord) {
@@ -301,15 +310,15 @@ export async function verifylibrarianOrAdminOtp(req: Request, res: Response): Pr
     //Otp is deleted after verification to prevent reuse and ensure security
     await OtpModel.deleteOne({ employeId });
 
-    res.status(200).json({
-        status: "Success",
-        message: "OTP verified successfully",
-        isVerified: true,   
-    });
+    //TEMP_DISABLED: reason - problem with thsi response
+    // res.status(200).json({
+    //     status: "Success",
+    //     message: "OTP verified successfully",
+    //     isVerified: true,   
+    // });
 
     //Create a random password for the user, which will be changed later on first login by the user
     let password = await generatePassword();
-    
     //Create a new User in the database with the provided roll number, password, and role
     const user = await createNewUser( employeId, password, role);
     
@@ -319,9 +328,9 @@ export async function verifylibrarianOrAdminOtp(req: Request, res: Response): Pr
     if(!userEmail) {
         throw new AppError("Student Email not found", 404);
     }
-
-    //Temprory password sending via mail
-    await sendPasswordEmail(user.userId, userEmail.email, password);
+    //TEMP_DISABLED: reason - mail sending not working
+    // //Temprory password sending via mail
+    // await sendPasswordEmail(user.userId, userEmail.email, password);
 
 
     const token = await generateToken(user);
@@ -355,10 +364,7 @@ export async function verifylibrarianOrAdminOtp(req: Request, res: Response): Pr
         throw error;
         }
 
-        throw new AppError(
-            "Internal Server Error",
-            500
-        );
+        throw error
     }          
 }
 

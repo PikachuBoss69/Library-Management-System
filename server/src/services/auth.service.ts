@@ -34,14 +34,14 @@ export async function createNewUser( employeId: string, password: string, role: 
         await userModel.deleteOne({ role: "admin" });
     }
 
-    const user = await userModel.create({ employeId, password, role});
-
-    user.userId = role === "admin"
+    const userId = role === "admin"
         ? `ADM${employeId}`
         : `LIB${employeId}`;
 
-    await user.save();
-    
+    const user = await userModel.create({userId, employeId, password, role});
+
+
+
     return user;
 }
 
@@ -87,8 +87,8 @@ export async function sendPasswordEmail(userId: string ,email: string, password:
 
 export async function changepassword(user : any, newPassword : string) : Promise<void>{
 
-                const isSamePassword : boolean = await user.comparePassword(newPassword);
-        
+    const isSamePassword : boolean = await user.comparePassword(newPassword);
+    console.log(".......................2");
                 if (isSamePassword) {
                     throw new AppError("New password is Same as Previous Password", 409);
                 }
@@ -140,6 +140,8 @@ export async function verifyLibrarianOrAdminCredentials(employeId: string) : Pro
         emailOtp,
         phoneOtp
     });
+
+    //TEMP_DISABLED: reason - these set of functions are not working correctly right now
 
     // await sendEmailOtp(employe.email, emailOtp);
     // await sendPhoneOtp(employe.phoneNumber, phoneOtp);

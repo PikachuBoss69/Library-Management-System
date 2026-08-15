@@ -12,7 +12,7 @@ export const paginationSchema = z.object({
 
 export const borrowBookSchema = z.object({
     body: z.object({
-        userId: objectId,
+        userId: z.coerce.string(),
 
         copyId: objectId,
     }),
@@ -45,7 +45,7 @@ export const getBorrowHistorySchema = z.object({});
 export const getAllBorrowedBooksSchema = z.object({
     query :
     paginationSchema.extend({
-        userId: objectId.optional(),
+        userId: z.coerce.string().optional(),
         copyId: objectId.optional(),
         status: z.enum(["issued", "returned", "lost"]),
         from: z.coerce.date().optional(),
@@ -57,7 +57,7 @@ export const getAllBorrowedBooksSchema = z.object({
 export const getOverdueBooksSchema = z.object({
     query :
     paginationSchema.extend({
-        userId: objectId.optional(),
+        userId: z.coerce.string().optional(),
         copyId: objectId.optional(),
         status: z.enum(["issued", "returned", "lost"]),
         from: z.coerce.date().optional(),

@@ -59,13 +59,13 @@ export const changePasswordSchema = z.object({
 
 export const registerStaffSchema = z.object({
     body: z.object({
-        employeeId: z.coerce.string().trim().min(1),
+        employeId: z.coerce.string().trim().min(1),
     }),
 });
 
 export const verifyStaffOtpSchema = z.object({
     body: z.object({
-        employeeId: z.string().trim().min(1),
+        employeId: z.string().trim().min(1),
 
         role: z.enum(["librarian", "admin"]),
 
@@ -79,9 +79,4 @@ export const verifyStaffOtpSchema = z.object({
             .trim()
             .length(6, "Phone OTP must be 6 digits"),
     }),
-});
-
-
-export const logoutUserSchema = z.object({
-    body: z.object({}),
 });

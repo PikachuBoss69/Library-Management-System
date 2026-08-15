@@ -11,7 +11,7 @@ export async function createFine(
     borrowId: string,
     userId: string,
     session?: ClientSession
-): Promise<HydratedDocument<IFine>> {
+): Promise<HydratedDocument<IFine> | void> {
 
     const ownSession = !session;
 
@@ -39,10 +39,7 @@ export async function createFine(
         );
 
         if (fineAmount <= 0) {
-            throw new AppError(
-                "No fine applicable for this borrow record",
-                400
-            );
+            return;
         }
 
         const [fineRecord] = await FineModel.create(

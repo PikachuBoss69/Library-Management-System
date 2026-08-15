@@ -11,7 +11,7 @@ const router = express.Router()
 router.post('/register',validate(validators.registerUserSchema),registerUser);
 router.post('/verify',validate(validators.verifyOtpSchema), verifyOtp);
 router.post('/login',validate(validators.loginUserSchema),loginUser);
-router.post('/logout',validate(validators.logoutUserSchema), logoutUser);
+router.post('/logout',authMiddleware,logoutUser);
 router.post('/changePassword', authMiddleware,validate(validators.changePasswordSchema),changePassword);
 router.post('/registerLib',authMiddleware,authorizeMiddleware(Roles.ADMIN),validate(validators.registerStaffSchema), registerUserLibrarianOrAdmin);
 router.post('/verifyLib',authMiddleware,authorizeMiddleware(Roles.ADMIN),validate(validators.verifyStaffOtpSchema),verifylibrarianOrAdminOtp);
