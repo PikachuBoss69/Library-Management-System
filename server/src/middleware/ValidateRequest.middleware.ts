@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { z } from "zod";
 import { AppError } from "../utils/AppError";
-import { error } from "node:console";
 
 export const validate = <T extends z.ZodTypeAny>(schema: T): RequestHandler => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -14,7 +13,7 @@ export const validate = <T extends z.ZodTypeAny>(schema: T): RequestHandler => {
         });
         console.log(result.success);
         if (!result.success) {
-            console.error(error);
+            console.log(result.error);
             throw new AppError(result.error.issues[0]!.message, 400);
             // validation failed
         }

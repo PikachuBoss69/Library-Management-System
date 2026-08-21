@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { issueBook, updateBookDetails, returnIssuedBook, reportLostBorrow, getBorrowById, getActiveBorrowedBooks, getBorrowHistory, get_OverdueBooks, get_AllBorrowedBooks} from "../services/borrow.service";
 import { BorrowQuery } from "../types/borrow.types";
+import { BookCopyModel } from "../models/bookCopies.model";
 
 export async function borrowBook(
     req: Request,
@@ -11,10 +12,28 @@ export async function borrowBook(
     try {
         const { userId, copyId } = req.body;
 
-        // Logged in librarian
         const issuedBy = req.user!._id;
 
+        const bookCopy = await BookCopyModel
+            .findById(copyId)
+            .populate("bookId", "availableCopies");
+
+        if (!bookCopy) {
+            throw new AppError("Book copy not found", 404);
+        }
+
+        if (bookCopy.status !== "available") {
+            throw new AppError("This book copy is not available", 400);
+        }
+        const book = bookCopy.bookId as unknown as {
+            availableCopies: number;
+        };
+
+        if (book.availableCopies < 1) {
+            throw new AppError("No copies of this book are currently available", 400);
+        }
         const borrowRecord = await issueBook(userId, copyId, issuedBy);
+
 
         res.status(201).json({
             success: true,
@@ -22,7 +41,13 @@ export async function borrowBook(
             data: borrowRecord,
         });
     } catch (error) {
-        next(new AppError("Failed to issue book", 500));
+        console.error(error);
+        if (error instanceof AppError) {
+            throw new AppError(error.message, error.statusCode);
+        }
+        else{
+            next(new AppError("Failed to issue book", 500));
+        }
     }
 }
 export async function returnBook(
@@ -66,6 +91,7 @@ export async function reportLostBook(
             data: borrowRecord,
         });
     } catch (error) {
+       
         next(new AppError("Failed to report lost book", 500));
     }
 }
@@ -98,10 +124,9 @@ export async function getMyBorrowedBooks(
     next: NextFunction
 ): Promise<void> {
     try {
-        const userId = req.user!._id;
-
+        
+        const userId = req.user!.userId;
         const borrowedBooks = await getActiveBorrowedBooks(userId.toString());
-
         res.status(200).json({
             success: true,
             message: "Borrowed books fetched successfully",
@@ -118,7 +143,7 @@ export async function getMyBorrowHistory(
     next: NextFunction
 ): Promise<void> {
     try {
-        const userId = req.user!._id;
+        const userId = req.user!.userId;
 
         const history = await getBorrowHistory(userId.toString());
 
@@ -131,6 +156,8 @@ export async function getMyBorrowHistory(
         next(new AppError("Failed to fetch borrow history", 500));
     }
 }
+
+
 
 export async function getAllBorrowedBooks(
     req: Request,

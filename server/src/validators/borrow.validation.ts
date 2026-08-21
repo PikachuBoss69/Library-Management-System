@@ -38,21 +38,20 @@ export const getBorrowRecordSchema = z.object({
     }),
 });
 
-export const getMyBorrowedBooksSchema = z.object({});
-
-export const getBorrowHistorySchema = z.object({});
 
 export const getAllBorrowedBooksSchema = z.object({
     query :
     paginationSchema.extend({
         userId: z.coerce.string().optional(),
         copyId: objectId.optional(),
-        status: z.enum(["issued", "returned", "lost"]),
+        status: z.enum(["issued", "returned", "lost"]).optional(),
         from: z.coerce.date().optional(),
         to: z.coerce.date().optional(),
     })
     
 })
+
+
 
 export const getOverdueBooksSchema = z.object({
     query :

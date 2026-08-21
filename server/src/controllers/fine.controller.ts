@@ -77,7 +77,7 @@ export async function fineWaived(
         }
         const fine = await fineService.fine_Waived(
             fineId,
-            user.toString(),
+            user._id.toString(),
             remarks
         );
 
@@ -108,7 +108,7 @@ export async function payFineByCash(
 
         const fine = await fineService.pay_FineByCash(
             fineId,
-            user.toString()
+            user._id.toString()
         );
 
         res.status(200).json({

@@ -24,9 +24,8 @@ export async function issueBook(
     }
 
     try {
-
+        
         await validateUserId(userId, session);
-        console.log("....................1");
         await validateCopyId(copyId, session);
 
         const issueDate = new Date();
@@ -347,12 +346,12 @@ export async function getActiveBorrowedBooks(
         .sort({
             issueDate: -1,
         }).limit(10);
+    
 
     return borrows.map((borrow) => {
 
         const copy = borrow.copyId as unknown as PopulatedBookCopy;
         const book = copy.bookId;
-
         return {
             borrowId: borrow._id.toString(),
             copyId: copy._id.toString(),
@@ -367,15 +366,39 @@ export async function getActiveBorrowedBooks(
 export async function getBorrowHistory(
     userId: string,
     session?: ClientSession
-): Promise<HydratedDocument<IBorrow>[]> {
+): Promise<BorrowedBookCard[]> {
 
-    return await BorrowModel.find({
+   const borrows = await BorrowModel.find({
         userId,
-    })
+        })
+        .populate({
+            path: "copyId",
+            populate: {
+                path: "bookId",
+            },
+        })
         .session(session ?? null)
         .sort({
             issueDate: -1,
-        });
+        }).limit(10);
+    
+        console.log("userId")
+
+    return borrows.map((borrow) => {
+
+        const copy = borrow.copyId as unknown as PopulatedBookCopy;
+        const book = copy.bookId;
+        return {
+            borrowId: borrow._id.toString(),
+            copyId: copy._id.toString(),
+            accessionNumber: copy.accessionNumber,
+            status: borrow.status,
+            title: book.title,
+            author: book.author,
+            dueDate: borrow.dueDate,
+            borrowedOn: borrow.issueDate,
+        };
+    });
 }
 
 
@@ -553,7 +576,7 @@ export async function countTodaysReturns(session? : ClientSession): Promise<numb
     startOfTomorrow.setDate(
         startOfTomorrow.getDate() + 1
     );
-
+  
     return BorrowModel.countDocuments({
         status: "returned",
 
@@ -567,6 +590,7 @@ export async function countTodaysReturns(session? : ClientSession): Promise<numb
 }
 
 export async function countOverdueBooks(session? : ClientSession): Promise<number> {
+    
     return BorrowModel.countDocuments({
         status : "issued",
         dueDate : {
@@ -576,6 +600,7 @@ export async function countOverdueBooks(session? : ClientSession): Promise<numbe
 }
 
 export async function countLostBooks(session? : ClientSession): Promise<number> {
+ 
     return BorrowModel.countDocuments({
         status : "lost"
     }).session(session ?? null);
@@ -598,6 +623,7 @@ export async function getRecentlyBorrowedBooks(session? : ClientSession): Promis
             issueDate: -1,
         })
         .limit(10) as unknown as PopulatedBorrow[];
+    
 
     return borrows.map((borrow) => {
 
@@ -646,7 +672,7 @@ export async function getTodaysBorrowedBooks(session? : ClientSession ): Promise
             issueDate: -1,
         })
         .limit(10) as unknown as PopulatedBorrow[];
-
+    
     return borrows.map((borrow) => {
 
         const copy = borrow.copyId;

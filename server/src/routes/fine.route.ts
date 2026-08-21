@@ -46,14 +46,14 @@ router.patch(
 );
 
 router.patch(
-    "/:fineId/pay/cash",
+    "/pay/cash/:fineId",
     authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
     validate(payFineByCashSchema),
     fineController.payFineByCash
 );
 
 router.post(
-    "/:fineId/pay/upi",
+    "/pay/upi/:fineId",
     validate(payFineByUPISchema),
     fineController.payFineByUPI
 );

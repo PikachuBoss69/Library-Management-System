@@ -32,12 +32,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
             throw new AppError("User not found", 404);
         }
 
-        // TODO #1:
-        // Temporary workaround for a Mongoose 9 typing mismatch between
-        // `findById()` and `Express.Request.user`.
-        // Runtime behavior is correct.
-        // Revisit after reviewing the Mongoose 9 type definitions.
-        req.user = user as any;
+        req.user = user;
 
         return next()
 

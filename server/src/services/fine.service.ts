@@ -341,25 +341,28 @@ export async function pay_FineByCash(
 
         const fine = await FineModel.findById(fineId)
             .session(session);
+            if (!fine) {
+                throw new AppError(
+                    "Fine not found.",
+                    404
+                );
+            }
+            
+            if (fine.status !== "pending") {
+                throw new AppError(
+                    `Fine has already been ${fine.status}.`,
+                    400
+                );
+            }
+            
+            fine.status = "settled";
+            fine.paymentMethod = "cash";
+            fine.paidDate = new Date();
+            
 
-        if (!fine) {
-            throw new AppError(
-                "Fine not found.",
-                404
-            );
-        }
-
-        if (fine.status !== "pending") {
-            throw new AppError(
-                `Fine has already been ${fine.status}.`,
-                400
-            );
-        }
-
-        fine.status = "settled";
-        fine.paymentMethod = "cash";
-        fine.paidDate = new Date();
-        fine.settledBy = new Types.ObjectId(collectedBy);
+            fine.settledBy = new Types.ObjectId(collectedBy);
+         
+      
 
         await fine.save({
             session,
@@ -442,6 +445,7 @@ export async function getPendingFineAmount(
 }
 
 export async function getPendingFineCount(session? : ClientSession): Promise<number> {
+
     return FineModel.countDocuments({
         status : "pending"
     }).session(session ?? null);

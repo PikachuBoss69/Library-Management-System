@@ -205,6 +205,7 @@ export async function deleteBookCopy(
 }
 
 export async function countIssuedBooks(session?: ClientSession): Promise<number> {
+    
     return BookCopyModel.countDocuments({
         status : "borrowed",
     }).session(session ?? null);  

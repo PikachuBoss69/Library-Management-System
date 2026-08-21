@@ -240,6 +240,7 @@ export async function getLatestArrivals(
         .sort({ createdAt: -1 })
         .limit(10);
 
+
     return books.map((book) => ({
         bookId: book._id.toString(),
         title: book.title,
@@ -250,6 +251,7 @@ export async function getLatestArrivals(
 }
 
 export async function countTotalBooks(session?: ClientSession): Promise<number> {
+    
     return BookModel.countDocuments().session(session ?? null);
 }
 
@@ -264,7 +266,7 @@ export async function countTotalCopies(session?: ClientSession): Promise<number>
             }
         }
     ]).session(session ?? null);
-
+    
     return result[0]!.totalBookCopies ?? 0;
  }
 

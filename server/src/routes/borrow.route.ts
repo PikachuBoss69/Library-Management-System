@@ -12,6 +12,8 @@ import { Roles } from "../constants/roles";
 
 const router = express.Router();
 
+//................STATIC ROUTES....................
+
 router.post(
     "/borrowBook",
     authMiddleware,
@@ -36,26 +38,28 @@ router.post(
     borrowController.reportLostBook
 );
 
-router.get(
-    "/:borrowId",
-    authMiddleware,
-    validate(borrowValidation.getBorrowRecordSchema),
-    borrowController.getBorrowRecordById
-);
 
 router.get(
     "/my",
     authMiddleware,
-    validate(borrowValidation.getMyBorrowedBooksSchema),
     borrowController.getMyBorrowedBooks
 );
 
 router.get(
-    "/history",
+    "/my/history",
     authMiddleware,
-    validate(borrowValidation.getBorrowHistorySchema),
     borrowController.getMyBorrowHistory
 );
+
+router.get(
+    "/overdue",
+    authMiddleware,
+    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
+    validate(borrowValidation.getOverdueBooksSchema),
+    borrowController.getOverdueBooks
+);
+
+//..................DYNAMOC ROUTE........................
 
 router.get(
     "/all",
@@ -66,10 +70,10 @@ router.get(
 );
 
 router.get(
-    "/overdue",
+    "/:borrowId",
     authMiddleware,
-    authorizeMiddleware(Roles.ADMIN, Roles.LIBRARIAN),
-    validate(borrowValidation.getOverdueBooksSchema),
-    borrowController.getOverdueBooks
+    validate(borrowValidation.getBorrowRecordSchema),
+    borrowController.getBorrowRecordById
 );
+
 export default router;
