@@ -33,6 +33,7 @@ export async function getLibrarianDashboard(req : Request, res : Response, next 
             data: dashboard
         })
     }catch(error){
+        console.log(error)
         next(error);
     }
 }

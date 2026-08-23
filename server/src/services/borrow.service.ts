@@ -624,7 +624,6 @@ export async function getRecentlyBorrowedBooks(session? : ClientSession): Promis
         })
         .limit(10) as unknown as PopulatedBorrow[];
     
-
     return borrows.map((borrow) => {
 
         const copy = borrow.copyId;
@@ -633,7 +632,7 @@ export async function getRecentlyBorrowedBooks(session? : ClientSession): Promis
 
         return {
             borrowId: borrow._id.toString(),
-            userId: user.userId.toString(),
+            userId: user.userId,
             userName: user.name,
             rollNumber: user.rollNumber,
             emploteId: user.employeId,
@@ -681,7 +680,7 @@ export async function getTodaysBorrowedBooks(session? : ClientSession ): Promise
 
         return {
             borrowId: borrow._id.toString(),
-            userId: user.userId.toString(),
+            userId: user.userId,
             userName: user.name,
             rollNumber: user.rollNumber,
             emploteId: user.employeId,
