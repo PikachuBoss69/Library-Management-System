@@ -15,6 +15,15 @@ interface LoginData{
     data : string
 }
 
+interface LogoutResponse{
+    success: boolean;
+    message: string;
+}
+interface OtpVerificationResponse{
+    success: boolean;
+    message: string;
+}
+
 export async function login(
     userId: string,
     password: string
@@ -32,6 +41,23 @@ export async function register(
 ): Promise<ApiResponse<RegisterData>>{
     const response = await api.post("/auth/register",{
         rollNumber
+    });
+
+    return response.data;
+}
+
+export async function logout(): Promise<LogoutResponse>{
+    const response = await api.patch("/auth/logout");
+
+    return response.data;
+}
+
+export async function verifyOtp(rollNumber: string,
+    emailOtp : string,
+    phoneOtp : string
+): Promise<OtpVerificationResponse>{
+    const response = await api.post("/auth/verify", {
+        rollNumber, emailOtp, phoneOtp
     });
 
     return response.data;
