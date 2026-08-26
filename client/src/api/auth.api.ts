@@ -3,24 +3,30 @@
 import { api } from "./axios";
 
 interface ApiResponse<T> {
-    success: boolean;
+    status: string;
     message: string;
     data : T;
     // whatever your actual backend returns
 }
-interface RegisterData{
-    rollNumber : string;
-}
-interface LoginData{
-    data : string
+
+interface RegisterResponse{
+    status: string;
+    message: string;
 }
 
+interface LoginData {
+    _id: string;
+    rollNumber: string;
+    role: "student" | "librarian" | "admin";
+}
+
+
 interface LogoutResponse{
-    success: boolean;
+    status: string;
     message: string;
 }
 interface OtpVerificationResponse{
-    success: boolean;
+    status: string;
     message: string;
 }
 
@@ -38,9 +44,9 @@ export async function login(
 
 export async function register(
     rollNumber: string
-): Promise<ApiResponse<RegisterData>>{
-    const response = await api.post("/auth/register",{
-        rollNumber
+): Promise<RegisterResponse> {
+    const response = await api.post("/auth/register", {
+        rollNumber,
     });
 
     return response.data;

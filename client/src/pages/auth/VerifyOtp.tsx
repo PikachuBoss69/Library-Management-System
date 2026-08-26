@@ -48,8 +48,10 @@ export default function VerifyOtp() {
             console.log(response);
 
             // Verification successful
-            if (response.success) {
-                navigate("/login");
+            if (response.status === "Success") {
+                navigate("/login", {
+                    replace: true
+                });
             } else {
                 setError(response.message);
             }

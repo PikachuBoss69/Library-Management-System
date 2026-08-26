@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/auth/AuthLayout";
 import { register } from "../../api/auth.api";
 
 export default function Register() {
+    const navigate = useNavigate();
+
     const [rollNumber, setRollNumber] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -26,8 +29,17 @@ export default function Register() {
 
             console.log("Registration response:", result);
 
-            // Navigation to OTP page will be added
-            // after we confirm the backend response.
+            if (result.status === 'Success') {
+                navigate("/verify-otp", {
+                    replace: true,
+                    state: {
+                        rollNumber: rollNumber.trim(),
+                    },
+                });
+            } else {
+                setError(result.message);
+            }
+
         } catch (error) {
             console.error("Registration failed:", error);
 
@@ -74,7 +86,6 @@ export default function Register() {
                         Use the roll number registered with the university.
                     </p>
 
-                    {/* Error */}
                     {error && (
                         <p className="mt-2 text-sm text-red-600">
                             {error}
