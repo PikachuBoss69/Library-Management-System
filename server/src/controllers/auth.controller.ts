@@ -71,6 +71,7 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
         res.cookie("token", token)
 
         res.status(200).json({
+            status: "Success",
             message:"User LogIn Successfully",
             user: {
                 _id: user._id,

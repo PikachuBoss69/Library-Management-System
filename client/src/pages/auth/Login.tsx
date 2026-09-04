@@ -44,7 +44,7 @@ export default function Login() {
             console.log("Login response:", result);
 
             if (result.status === "Success") {
-                switch (result.data.role) {
+                switch (result.user.role) {
                     case "student":
                         navigate("/student/dashboard", {
                             replace: true,

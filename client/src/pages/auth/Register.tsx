@@ -110,6 +110,8 @@ export default function Register() {
                 <button
                     type="button"
                     className="font-medium text-slate-900 hover:underline"
+
+                    onClick={()=> navigate("/login")}
                 >
                     Sign in
                 </button>

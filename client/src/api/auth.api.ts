@@ -2,10 +2,10 @@
 
 import { api } from "./axios";
 
-interface ApiResponse<T> {
+interface LoginResponse<T> {
     status: string;
     message: string;
-    data : T;
+    user : T;
     // whatever your actual backend returns
 }
 
@@ -33,7 +33,7 @@ interface OtpVerificationResponse{
 export async function login(
     userId: string,
     password: string
-): Promise<ApiResponse<LoginData>>{
+): Promise<LoginResponse<LoginData>>{
     const response = await api.post("/auth/login", {
         userId,
         password,
@@ -68,3 +68,4 @@ export async function verifyOtp(rollNumber: string,
 
     return response.data;
 }
+
