@@ -16,7 +16,7 @@ export default function StudentSidebar() {
         },
         {
             name: "My Borrowed Books",
-            path: "/student/borrowed",
+            path: "/student/borrow",
             icon: "▤",
         },
         {

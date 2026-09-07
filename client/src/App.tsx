@@ -4,6 +4,8 @@ import Login from "./pages/auth/Login";
 import StudentDashboard from "./pages/dashboard/StudentDashboard"
 import StudentLayout from "./layouts/StudentLayout";
 import {Route, Routes} from 'react-router-dom';
+import BorrowedBooks from "./components/student/BorrowedBooks";
+import BrowseBooks from "./components/student/BrowseBooks";
 
 function App() {
 
@@ -20,6 +22,14 @@ function App() {
                 <Route
                     path="dashboard"
                     element={<StudentDashboard />}
+                />
+                <Route 
+                    path="borrow"
+                    element={<BorrowedBooks />}
+                />
+                <Route
+                    path="books"
+                    element = {<BrowseBooks />} 
                 />
             </Route>
         

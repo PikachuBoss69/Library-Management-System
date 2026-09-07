@@ -326,7 +326,7 @@ export default function Dashboard() {
                 </div>
 
 
-                {dashboard.recentlyAddedBooks.length === 0 ? (
+                {dashboard.latestArrivals.length === 0 ? (
 
                     <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
 
@@ -340,7 +340,7 @@ export default function Dashboard() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
 
-                        {dashboard.recentlyAddedBooks.map((book) => (
+                        {dashboard.latestArrivals.map((book) => (
 
                             <div
                                 key={book.bookId}

@@ -1,6 +1,6 @@
 import { api } from "./axios";
 
-interface BorrowedBook {
+export interface BorrowedBook {
     borrowId: string;
     copyId: string;
     accessionNumber: string;
@@ -27,7 +27,7 @@ interface StudnetStats {
 export interface StudentDashboardData {
     stats : StudnetStats
     borrowedBooks: BorrowedBook[];
-    recentlyAddedBooks: RecentlyAddedBook[];
+    latestArrivals: RecentlyAddedBook[];
 }
 
 export interface StudentDashboardResponse {
@@ -36,10 +36,23 @@ export interface StudentDashboardResponse {
     data: StudentDashboardData;
 }
 
+export interface BorrowedBookResponse {
+    success: boolean;
+    message: string;
+    data: BorrowedBook[];
+} 
+
 export async function getStudentDashboard(): Promise<StudentDashboardResponse> {
 
     const response = await api.get(
         "/dashboard/student"
+    );
+    return response.data;
+}
+
+export async function getBorrowedBooks(): Promise<BorrowedBookResponse> {
+    const response = await api.get(
+        "/borrow/my"
     );
 
     return response.data;
